@@ -1,0 +1,9 @@
+## Interface: 70300
+## Title: |cFF74D06CRE|rKeys
+## Notes: Collect information about keystones.
+## Version: 0.1
+## Author: AcidWeb
+## SavedVariables: REKeysDB, REKeysSettings
+
+Embeds.xml
+REKeys.xml
