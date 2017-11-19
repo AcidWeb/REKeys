@@ -3,8 +3,9 @@ _G.REKeysNamespace = {}
 local RE = REKeysNamespace
 local LDB = LibStub("LibDataBroker-1.1")
 local QTIP = LibStub("LibQTip-1.0")
+local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 
---GLOBALS: NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font
+--GLOBALS: NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
 local strsplit, pairs, ipairs, select, sbyte, sgsub, time, date, tonumber, fastrandom, wipe, sort, tinsert = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.gsub, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
@@ -14,6 +15,8 @@ local GetContainerItemID = _G.GetContainerItemID
 local GetContainerItemLink = _G.GetContainerItemLink
 local GetNumFriends = _G.GetNumFriends
 local GetFriendInfo = _G.GetFriendInfo
+local GetMapInfo = _G.C_ChallengeMode.GetMapInfo
+local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local BNGetNumFriends = _G.BNGetNumFriends
 local BNGetFriendInfo = _G.BNGetFriendInfo
 local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
@@ -23,19 +26,18 @@ local UnitFactionGroup = _G.UnitFactionGroup
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
-local GetMapInfo = _G.C_ChallengeMode.GetMapInfo
-local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local Timer = _G.C_Timer
 local SecondsToTime = _G.SecondsToTime
 
-RE.Version = 10
+RE.DataVersion = 2
 RE.CurrentWeek = 0
+RE.ThrottleTimer = 0
+RE.Outdated = false
 RE.ThrottleTable = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
-RE.MyKeyRaw = ""
 
-RE.DefaultSettings = {}
+RE.DefaultSettings = {["MyKeys"] = {}}
 RE.AffixSchedule = {
 	{6, 3, 9},
 	{5, 13, 10},
@@ -48,7 +50,7 @@ RE.AffixSchedule = {
 	{5, 4, 9},
 	{8, 12, 10},
 	{7, 13, 9},
-	{11, 14, 10},
+	{11, 14, 10}
 }
 
 -- Event functions
@@ -74,7 +76,12 @@ function RE:OnEvent(self, event, name, ...)
 			RE.Settings.ID = fastrandom(1, 1000000000)
 		end
 
-		--TODO: Drop old records from DB
+		for _, data in pairs(RE.DB) do
+			if data[1] ~= RE.DataVersion then
+				wipe(RE.DB)
+				break
+			end
+		end
 
 		RE.LDB = LDB:NewDataObject("REKeys", {
 			type = "data source",
@@ -82,50 +89,63 @@ function RE:OnEvent(self, event, name, ...)
 			icon = "Interface\\Icons\\INV_Relics_Hourglass",
 		})
 		function RE.LDB:OnEnter()
-			RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
-			RE.Tooltip:SetHeaderFont(Game15Font)
-			RE:RequestKeys()
-			RE:FillTooltip()
+			if RE.Outdated then
+				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
+				RE.Tooltip:SetHeaderFont(Game18Font)
+				RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
+				RE.Tooltip:SetHeaderFont(Game15Font)
+				RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
+			else
+				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
+				RE.Tooltip:SetHeaderFont(Game15Font)
+				RE:RequestKeys()
+				RE:FillTooltip()
+			end
 			RE.Tooltip:SmartAnchorTo(self)
 			RE.Tooltip:Show()
 		end
 		function RE.LDB:OnLeave()
+			if RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0 then
+				RE.UpdateTimer:Cancel()
+				RE.UpdateTimer = nil
+			end
 			QTIP:Release(RE.Tooltip)
 			RE.Tooltip = nil
 		end
 		RegisterAddonMessagePrefix("REKeys")
-
 		self:UnregisterEvent("ADDON_LOADED")
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		RE.MyName, RE.MyRealm = UnitFullName("player")
 		RE.MyFullName = RE.MyName.."-"..RE.MyRealm
 		RE.MyFaction = UnitFactionGroup("player")
 		RE.MyClass = select(2, UnitClass("player"))
-		Timer.After(15, RE.KeySearchDelay)
-
+		Timer.After(10, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "BAG_NEW_ITEMS_UPDATED" then
-		self:UnregisterEvent("BAG_NEW_ITEMS_UPDATED")
 		RE:FindKey()
-		self:RegisterEvent("BAG_NEW_ITEMS_UPDATED")
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, _, sender = ...
 		msg = {strsplit(";", msg)}
-		-- TODO: Catch outdated addon
-		if tonumber(msg[2]) == RE.Version and sender ~= RE.MyFullName then
+		if tonumber(msg[2]) > RE.DataVersion then
+			RE.Outdated = true
+			return
+		end
+		if tonumber(msg[2]) == RE.DataVersion and sender ~= RE.MyFullName then
 			if msg[1] == "DajKamienia" and RE.MyKey.DungeonID ~= "0" then
-				print("DajKamienia")
+				print("DajKamienia "..sender)
 				if not RE.ThrottleTable[sender] then RE.ThrottleTable[sender] = 0 end
 				local timestamp = time(date('!*t', GetServerTime()))
 				if timestamp - RE.ThrottleTable[sender] > 30 then
 					RE.ThrottleTable[sender] = timestamp
-					SendAddonMessage("REKeys", "MaszKamienia;"..RE.Version..";"..RE.MyFullName..";"..RE.MyClass..";"..RE.MyKey.DungeonID..";"..RE.MyKey.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
+					SendAddonMessage("REKeys", "MaszKamienia;"..RE.DataVersion..";"..RE.MyFullName..";"..RE.MyClass..";"..RE.MyKey.DungeonID..";"..RE.MyKey.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
 				end
 			elseif msg[1] == "MaszKamienia" then
-				print("MaszKamienia")
+				print("MaszKamienia "..sender)
 				if not RE.DB[msg[3]] then RE.DB[msg[3]] = {} end
-				RE.DB[msg[3]] = {RE.Version, time(date('!*t', GetServerTime())), msg[4], msg[5], msg[6], msg[7]}
-				if QTIP:IsAcquired("REKeysTooltip") then RE:FillTooltip() end
+				RE.DB[msg[3]] = {RE.DataVersion, time(date('!*t', GetServerTime())), msg[4], msg[5], msg[6], msg[7]}
+				if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0) then
+					RE.UpdateTimer = Timer.NewTimer(2, RE.FillTooltip)
+				end
 			end
 		end
 	end
@@ -145,11 +165,20 @@ function RE:FindKey()
 			end
 		end
 	end
-	if RE.MyKeyRaw ~= rawKey then
+	if rawKey == "" then
+		if not RE.Settings.MyKeys[RE.MyFullName] then RE.Settings.MyKeys[RE.MyFullName] = "" end
+		if RE.Settings.MyKeys[RE.MyFullName] ~= rawKey then wipe(RE.DB) end
+		RE.MyKey = {["DungeonID"] = "0", ["DungeonLevel"] = "0"}
+		RE.LDB.text = "|cffe6cc80-|r"
+		RE.DB[RE.MyFullName] = nil
+		RE.Settings.MyKeys[RE.MyFullName] = ""
+	elseif RE.Settings.MyKeys[RE.MyFullName] ~= rawKey or not RE.MyKey then
 		local keyData = {strsplit(':', rawKey)}
+		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		RE.MyKey = {["DungeonID"] = keyData[2], ["DungeonLevel"] = keyData[3]}
-		RE.MyKeyRaw = rawKey
 		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(RE.MyKey.DungeonID)).." +"..RE.MyKey.DungeonLevel.."|r"
+		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.MyKey.DungeonID, RE.MyKey.DungeonLevel, RE.Settings.ID}
+		RE.Settings.MyKeys[RE.MyFullName] = rawKey
 
 		if tonumber(RE.MyKey.DungeonLevel) >= 7 then
 			local affixA, affixB = tonumber(keyData[4]), tonumber(keyData[5])
@@ -160,28 +189,26 @@ function RE:FindKey()
 				end
 			end
 		end
-	elseif rawKey == "" then
-		RE.MyKey = {["DungeonID"] = "0", ["DungeonLevel"] = "0"}
-		RE.LDB.text = "|cffe6cc80-|r"
+		if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then RE:FillTooltip() end
 	end
-	if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
-	RE.DB[RE.MyFullName] = {RE.Version, time(date('!*t', GetServerTime())), RE.MyClass, RE.MyKey.DungeonID, RE.MyKey.DungeonLevel, RE.Settings.ID}
 end
 
 function RE:RequestKeys()
 	print("RequestKeys")
+	local timestamp = time(date('!*t', GetServerTime()))
+	if timestamp - RE.ThrottleTimer < 5 then return end
 	if IsInGroup() or IsInRaid() then
-		SendAddonMessage("REKeys", "DajKamienia;"..RE.Version, "RAID")
+		SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "RAID")
 	end
 
 	if IsInGuild() then
-		SendAddonMessage("REKeys", "DajKamienia;"..RE.Version, "GUILD")
+		SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "GUILD")
 	end
 
 	for i = 1, GetNumFriends() do
 		local name, _, _, _, connected = GetFriendInfo(i)
 		if name and connected then
-			SendAddonMessage("REKeys", "DajKamienia;"..RE.Version, "WHISPER", name.."-"..RE.MyRealm)
+			SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "WHISPER", name.."-"..RE.MyRealm)
 		end
 	end
 
@@ -190,14 +217,16 @@ function RE:RequestKeys()
 		if toonName then
 			local _, toonName, _, realmName, _, faction = BNGetGameAccountInfo(toonID)
 			if faction == RE.MyFaction then
-				SendAddonMessage("REKeys", "DajKamienia;"..RE.Version, "WHISPER", toonName.."-"..sgsub(realmName, " ", ""))
+				SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "WHISPER", toonName.."-"..sgsub(realmName, " ", ""))
 			end
 		end
 	end
+	RE.ThrottleTimer = timestamp
 end
 
 function RE:FillTooltip()
 	RE.Tooltip:Clear()
+	RE.Tooltip:SetColumnLayout(5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 	RE.Tooltip:AddLine()
 	RE.Tooltip:SetCell(1, 1, "", nil, nil, nil, nil, nil, nil, nil, 60)
 	RE.Tooltip:SetCell(1, 2, "", nil, nil, nil, nil, nil, nil, 10, 10)
@@ -205,6 +234,7 @@ function RE:FillTooltip()
 	RE.Tooltip:SetCell(1, 4, "", nil, nil, nil, nil, nil, nil, 10, 10)
 	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 60)
 	RE:GetPrefixes()
+	RE.Tooltip:AddLine()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:AddSeparator()
 	RE.Tooltip:AddLine()
@@ -257,7 +287,7 @@ function RE:GetShortMapName(mapName)
 end
 
 function RE:GetShortTime(dbTime)
-	local rawTime = time(date('!*t', GetServerTime())) - dbTime
+	local rawTime = time(date('!*t', GetServerTime())) - dbTime + 1
 	return SecondsToTime(rawTime)
 end
 
@@ -271,7 +301,7 @@ function RE:GetPrefixes()
 	end
 	RE.Tooltip:AddHeader(GetAffixInfo(affixes[1][1]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][2]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][3]) or "?")
 	RE.Tooltip:AddLine()
-	RE.Tooltip:AddHeader(GetAffixInfo(affixes[2][1]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[2][2]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[2][3]) or "?")
+	RE.Tooltip:AddHeader(GetAffixInfo(affixes[2][1]) or "?", "|cff00ff00|||r", GetAffixInfo(affixes[2][2]) or "?", "|cff00ff00|||r", GetAffixInfo(affixes[2][3]) or "?")
 end
 
 function RE:KeySearchDelay()

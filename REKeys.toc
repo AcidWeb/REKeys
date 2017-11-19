@@ -6,4 +6,5 @@
 ## SavedVariables: REKeysDB, REKeysSettings
 
 Embeds.xml
+Locale\Locale.xml
 REKeys.xml

@@ -1,0 +1,4 @@
+local L = LibStub("AceLocale-3.0"):NewLocale("REKeys", "enUS", true)
+
+L["Addon outdated!"] = true
+L["Until updated sending and reciving data will be disabled."] = true
