@@ -6,7 +6,7 @@ local QTIP = LibStub("LibQTip-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 
 --GLOBALS: NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
-local strsplit, pairs, ipairs, select, sbyte, sgsub, time, date, tonumber, fastrandom, wipe, sort, tinsert = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.gsub, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert
+local strsplit, pairs, ipairs, select, sbyte, sgsub, time, date, tonumber, fastrandom, wipe, sort, tinsert, next = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.gsub, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
 local GetServerTime = _G.GetServerTime
@@ -30,14 +30,13 @@ local Timer = _G.C_Timer
 local SecondsToTime = _G.SecondsToTime
 
 RE.DataVersion = 2
-RE.CurrentWeek = 0
 RE.ThrottleTimer = 0
 RE.Outdated = false
 RE.ThrottleTable = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
 
-RE.DefaultSettings = {["MyKeys"] = {}}
+RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0}
 RE.AffixSchedule = {
 	{6, 3, 9},
 	{5, 13, 10},
@@ -79,6 +78,8 @@ function RE:OnEvent(self, event, name, ...)
 		for _, data in pairs(RE.DB) do
 			if data[1] ~= RE.DataVersion then
 				wipe(RE.DB)
+				RE.Settings.MyKeys = {}
+				RE.Settings.CurrentWeek = 0
 				break
 			end
 		end
@@ -131,13 +132,15 @@ function RE:OnEvent(self, event, name, ...)
 			return
 		end
 		if tonumber(msg[2]) == RE.DataVersion and sender ~= RE.MyFullName then
-			if msg[1] == "DajKamienia" and RE.MyKey.DungeonID ~= "0" then
+			if msg[1] == "DajKamienia" and next(RE.Settings.MyKeys) ~= nil then
 				print("DajKamienia "..sender)
 				if not RE.ThrottleTable[sender] then RE.ThrottleTable[sender] = 0 end
 				local timestamp = time(date('!*t', GetServerTime()))
 				if timestamp - RE.ThrottleTable[sender] > 30 then
 					RE.ThrottleTable[sender] = timestamp
-					SendAddonMessage("REKeys", "MaszKamienia;"..RE.DataVersion..";"..RE.MyFullName..";"..RE.MyClass..";"..RE.MyKey.DungeonID..";"..RE.MyKey.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
+					for name, data in pairs(RE.Settings.MyKeys) do
+						SendAddonMessage("REKeys", "MaszKamienia;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
+					end
 				end
 			elseif msg[1] == "MaszKamienia" then
 				print("MaszKamienia "..sender)
@@ -165,30 +168,39 @@ function RE:FindKey()
 			end
 		end
 	end
-	if rawKey == "" then
-		if not RE.Settings.MyKeys[RE.MyFullName] then RE.Settings.MyKeys[RE.MyFullName] = "" end
-		if RE.Settings.MyKeys[RE.MyFullName] ~= rawKey then wipe(RE.DB) end
-		RE.MyKey = {["DungeonID"] = "0", ["DungeonLevel"] = "0"}
-		RE.LDB.text = "|cffe6cc80-|r"
-		RE.DB[RE.MyFullName] = nil
-		RE.Settings.MyKeys[RE.MyFullName] = ""
-	elseif RE.Settings.MyKeys[RE.MyFullName] ~= rawKey or not RE.MyKey then
-		local keyData = {strsplit(':', rawKey)}
-		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
-		RE.MyKey = {["DungeonID"] = keyData[2], ["DungeonLevel"] = keyData[3]}
-		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(RE.MyKey.DungeonID)).." +"..RE.MyKey.DungeonLevel.."|r"
-		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.MyKey.DungeonID, RE.MyKey.DungeonLevel, RE.Settings.ID}
-		RE.Settings.MyKeys[RE.MyFullName] = rawKey
 
-		if tonumber(RE.MyKey.DungeonLevel) >= 7 then
+	if rawKey == "" then
+		if RE.Settings.MyKeys[RE.MyFullName] ~= nil then
+			wipe(RE.DB)
+			RE.Settings.MyKeys = {}
+			RE.Settings.CurrentWeek = 0
+		end
+		RE.Settings.MyKeys[RE.MyFullName] = nil
+		RE.DB[RE.MyFullName] = nil
+		RE.LDB.text = "|cffe6cc80-|r"
+	else
+		if not RE.Settings.MyKeys[RE.MyFullName] then
+			RE.Settings.MyKeys[RE.MyFullName] = {}
+		elseif RE.Settings.MyKeys[RE.MyFullName].RawKey == rawKey and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
+			return
+		end
+		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
+		local keyData = {strsplit(':', rawKey)}
+
+		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = keyData[2], ["DungeonLevel"] = keyData[3], ["Class"] = RE.MyClass, ["RawKey"] = rawKey}
+		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID}
+		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
+
+		if tonumber(RE.Settings.MyKeys[RE.MyFullName].DungeonLevel) >= 7 and RE.Settings.CurrentWeek == 0 then
 			local affixA, affixB = tonumber(keyData[4]), tonumber(keyData[5])
 			for i, affixes in ipairs(RE.AffixSchedule) do
 				if affixA == affixes[1] and affixB == affixes[2] then
-					RE.CurrentWeek = i
+					RE.Settings.CurrentWeek = i
 					break
 				end
 			end
 		end
+
 		if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then RE:FillTooltip() end
 	end
 end
@@ -293,10 +305,10 @@ end
 
 function RE:GetPrefixes()
 	local affixes = {{0, 0, 0}, {0, 0, 0}}
-	if RE.CurrentWeek > 0 then
-		local scheduleWeek = RE.CurrentWeek - 1 % #RE.AffixSchedule + 1
+	if RE.Settings.CurrentWeek > 0 then
+		local scheduleWeek = RE.Settings.CurrentWeek - 1 % #RE.AffixSchedule + 1
 		affixes[1] = RE.AffixSchedule[scheduleWeek]
-		scheduleWeek = RE.CurrentWeek % #RE.AffixSchedule + 1
+		scheduleWeek = RE.Settings.CurrentWeek % #RE.AffixSchedule + 1
 		affixes[2] = RE.AffixSchedule[scheduleWeek]
 	end
 	RE.Tooltip:AddHeader(GetAffixInfo(affixes[1][1]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][2]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][3]) or "?")
