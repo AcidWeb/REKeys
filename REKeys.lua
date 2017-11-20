@@ -10,6 +10,7 @@ LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
+local SendChatMessage = _G.SendChatMessage
 local GetServerTime = _G.GetServerTime
 local GetContainerNumSlots = _G.GetContainerNumSlots
 local GetContainerItemID = _G.GetContainerItemID
@@ -115,6 +116,11 @@ function RE:OnEvent(self, event, name, ...)
 			end
 			QTIP:Release(RE.Tooltip)
 			RE.Tooltip = nil
+		end
+		function RE.LDB:OnClick(button)
+			if button == "MiddleButton" and RE.Settings.MyKeys[RE.MyFullName] then
+				SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "GUILD")
+			end
 		end
 
 		_G.SlashCmdList["REKEYS"] = function()
