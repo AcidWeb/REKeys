@@ -362,6 +362,7 @@ end
 
 function RE:KeySearchDelay()
 	RE:FindKey()
+	RE.AceBucket:RegisterBucketEvent("CHALLENGE_MODE_COMPLETED", 2, RE.FindKey)
 	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 end
 
