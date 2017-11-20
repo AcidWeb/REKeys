@@ -6,8 +6,8 @@ local QTIP = LibStub("LibQTip-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 
---GLOBALS: NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
-local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next
+--GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
+local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
 local SendChatMessage = _G.SendChatMessage
@@ -141,25 +141,30 @@ function RE:OnEvent(self, event, name, ...)
 		Timer.After(10, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
-		local msg, _, sender = ...
+		local msg, channel, sender = ...
 		msg = {strsplit(";", msg)}
 		if tonumber(msg[2]) > RE.DataVersion then
 			RE.Outdated = true
 			return
 		end
 		if tonumber(msg[2]) == RE.DataVersion and sender ~= RE.MyFullName then
-			if msg[1] == "DajKamienia" and next(RE.Settings.MyKeys) ~= nil then
-				print("DajKamienia "..sender)
+			if msg[1] == "KR" and next(RE.Settings.MyKeys) ~= nil then
 				if not RE.ThrottleTable[sender] then RE.ThrottleTable[sender] = 0 end
 				local timestamp = time(date('!*t', GetServerTime()))
 				if timestamp - RE.ThrottleTable[sender] > 30 then
 					RE.ThrottleTable[sender] = timestamp
-					for name, data in pairs(RE.Settings.MyKeys) do
-						SendAddonMessage("REKeys", "MaszKamienia;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
+					if channel == "PARTY" or channel == "RAID" then
+						for name, data in pairs(RE.Settings.MyKeys) do
+							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID..";"..sender, channel)
+						end
+					else
+						for name, data in pairs(RE.Settings.MyKeys) do
+							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
+						end
 					end
 				end
-			elseif msg[1] == "MaszKamienia" then
-				print("MaszKamienia "..sender)
+			elseif msg[1] == "KD" then
+				if msg[8] and msg[8] ~= RE.MyFullName then return end
 				if not RE.DB[msg[3]] then RE.DB[msg[3]] = {} end
 				RE.DB[msg[3]] = {RE.DataVersion, time(date('!*t', GetServerTime())), msg[4], msg[5], msg[6], msg[7]}
 				if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0) then
@@ -173,7 +178,6 @@ end
 -- Main functions
 
 function RE:FindKey()
-	print("FindKey")
 	local rawKey = ""
 	for bag = 0, NUM_BAG_SLOTS do
 		local bagSlots = GetContainerNumSlots(bag)
@@ -222,21 +226,20 @@ function RE:FindKey()
 end
 
 function RE:RequestKeys()
-	print("RequestKeys")
 	local timestamp = time(date('!*t', GetServerTime()))
 	if timestamp - RE.ThrottleTimer < 5 then return end
 	if IsInGroup() or IsInRaid() then
-		SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "RAID")
+		SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "RAID")
 	end
 
 	if IsInGuild() then
-		SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "GUILD")
+		SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "GUILD")
 	end
 
 	for i = 1, GetNumFriends() do
 		local name, _, _, _, connected = GetFriendInfo(i)
 		if name and connected then
-			SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "WHISPER", name.."-"..RE.MyRealm)
+			SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", name.."-"..RE.MyRealm)
 		end
 	end
 
@@ -245,7 +248,7 @@ function RE:RequestKeys()
 		if toonName then
 			local _, toonName, _, realmName, _, faction = BNGetGameAccountInfo(toonID)
 			if faction == RE.MyFaction and realmName == RE.MyRealm then
-				SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "WHISPER", toonName.."-"..RE.MyRealm)
+				SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", toonName.."-"..RE.MyRealm)
 			end
 		end
 	end
