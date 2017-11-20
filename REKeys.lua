@@ -36,6 +36,8 @@ RE.Outdated = false
 RE.ThrottleTable = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
+SLASH_REKEYS1 = "/rekeys"
+SLASH_REKEYS2 = "/rk"
 
 RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0}
 RE.AffixSchedule = {
@@ -114,6 +116,15 @@ function RE:OnEvent(self, event, name, ...)
 			QTIP:Release(RE.Tooltip)
 			RE.Tooltip = nil
 		end
+
+		_G.SlashCmdList["REKEYS"] = function()
+			if not QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
+				print("|cFF74D06C[REKeys]|r "..L["Collecting keystone data. Please wait 10 seconds."])
+				RE:RequestKeys()
+				Timer.After(10, RE.FillChat)
+			end
+		end
+
 		RegisterAddonMessagePrefix("REKeys")
 		self:UnregisterEvent("ADDON_LOADED")
 	elseif event == "PLAYER_ENTERING_WORLD" then
@@ -282,6 +293,34 @@ function RE:FillTooltip()
 			fill = false
 		else
 			fill = true
+		end
+	end
+end
+
+function RE:FillChat()
+	wipe(RE.DBNameSort)
+	wipe(RE.DBAltSort)
+	for name, data in pairs(RE.DB) do
+		local id = data[6]
+		if not RE.DBAltSort[id] then
+			RE.DBAltSort[id] = {}
+			tinsert(RE.DBNameSort, name)
+		else
+			tinsert(RE.DBAltSort[id], name)
+		end
+	end
+	sort(RE.DBNameSort)
+	for i = 1, #RE.DBNameSort do
+		local name = RE.DBNameSort[i]
+		local data = RE.DB[name]
+		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		if #RE.DBAltSort[data[6]] > 0 then
+			sort(RE.DBAltSort[data[6]])
+			for z = 1, #RE.DBAltSort[data[6]] do
+				local name = RE.DBAltSort[data[6]][z]
+				local data = RE.DB[name]
+				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			end
 		end
 	end
 end
