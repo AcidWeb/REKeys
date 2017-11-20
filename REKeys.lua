@@ -1,9 +1,10 @@
 local _G = _G
-_G.REKeysNamespace = {}
+_G.REKeysNamespace = {["AceBucket"] = {}}
 local RE = REKeysNamespace
 local LDB = LibStub("LibDataBroker-1.1")
 local QTIP = LibStub("LibQTip-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
+LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 
 --GLOBALS: NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
 local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next
@@ -122,8 +123,6 @@ function RE:OnEvent(self, event, name, ...)
 		RE.MyClass = select(2, UnitClass("player"))
 		Timer.After(10, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-	elseif event == "BAG_NEW_ITEMS_UPDATED" then
-		RE:FindKey()
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, _, sender = ...
 		msg = {strsplit(";", msg)}
@@ -318,7 +317,7 @@ end
 
 function RE:KeySearchDelay()
 	RE:FindKey()
-	_G.REKeys:RegisterEvent("BAG_NEW_ITEMS_UPDATED")
+	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 end
 
 function RE:CSize(char)

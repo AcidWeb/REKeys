@@ -5,5 +5,6 @@
   <Script file="Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
   <Script file="Libs\LibQTip-1.0\LibQTip-1.0.lua"/>
   <Include file="Libs\AceLocale-3.0\AceLocale-3.0.xml"/>
+  <Include file="Libs\AceBucket-3.0\AceBucket-3.0.xml"/>
 
 </Ui>
