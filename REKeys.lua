@@ -6,7 +6,7 @@ local QTIP = LibStub("LibQTip-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 
 --GLOBALS: NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
-local strsplit, pairs, ipairs, select, sbyte, sgsub, time, date, tonumber, fastrandom, wipe, sort, tinsert, next = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.gsub, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next
+local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
 local GetServerTime = _G.GetServerTime
@@ -228,8 +228,8 @@ function RE:RequestKeys()
 		local _, _, _, _, toonName, toonID = BNGetFriendInfo(i)
 		if toonName then
 			local _, toonName, _, realmName, _, faction = BNGetGameAccountInfo(toonID)
-			if faction == RE.MyFaction then
-				SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "WHISPER", toonName.."-"..sgsub(realmName, " ", ""))
+			if faction == RE.MyFaction and realmName == RE.MyRealm then
+				SendAddonMessage("REKeys", "DajKamienia;"..RE.DataVersion, "WHISPER", toonName.."-"..RE.MyRealm)
 			end
 		end
 	end
