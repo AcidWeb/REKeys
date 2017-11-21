@@ -94,6 +94,7 @@ function RE:OnEvent(self, event, name, ...)
 			icon = "Interface\\Icons\\INV_Relics_Hourglass",
 		})
 		function RE.LDB:OnEnter()
+			if RE.LDB.text == "|cFF74D06CRE|rKeys" then return end
 			if RE.Outdated then
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
 				RE.Tooltip:SetHeaderFont(Game18Font)
@@ -138,8 +139,10 @@ function RE:OnEvent(self, event, name, ...)
 		RE.MyFullName = RE.MyName.."-"..RE.MyRealm
 		RE.MyFaction = UnitFactionGroup("player")
 		RE.MyClass = select(2, UnitClass("player"))
-		Timer.After(10, RE.KeySearchDelay)
+		Timer.After(5, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+	elseif event == "CHALLENGE_MODE_COMPLETED" then
+		Timer.After(1, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, channel, sender = ...
 		msg = {strsplit(";", msg)}
@@ -177,7 +180,7 @@ end
 
 -- Main functions
 
-function RE:FindKey()
+function RE:FindKey(dungeonCompleted)
 	local rawKey = ""
 	for bag = 0, NUM_BAG_SLOTS do
 		local bagSlots = GetContainerNumSlots(bag)
@@ -209,7 +212,11 @@ function RE:FindKey()
 
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = keyData[2], ["DungeonLevel"] = keyData[3], ["Class"] = RE.MyClass, ["RawKey"] = rawKey}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID}
-		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
+		local keyDetails = RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
+		if dungeonCompleted and IsInGroup() then
+			SendChatMessage("[REKeys] "..L["My new key"]..": "..keyDetails, "PARTY")
+		end
+		RE.LDB.text = "|cffe6cc80"..keyDetails.."|r"
 
 		if tonumber(RE.Settings.MyKeys[RE.MyFullName].DungeonLevel) >= 7 and RE.Settings.CurrentWeek == 0 then
 			local affixA, affixB = tonumber(keyData[4]), tonumber(keyData[5])
@@ -365,7 +372,7 @@ end
 
 function RE:KeySearchDelay()
 	RE:FindKey()
-	RE.AceBucket:RegisterBucketEvent("CHALLENGE_MODE_COMPLETED", 2, RE.FindKey)
+	_G.REKeys:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 end
 
