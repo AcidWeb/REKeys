@@ -325,11 +325,11 @@ function RE:FillTooltip()
 	RE.Tooltip:Clear()
 	RE.Tooltip:SetColumnLayout(5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 	RE.Tooltip:AddLine()
-	RE.Tooltip:SetCell(1, 1, "", nil, nil, nil, nil, nil, nil, nil, 60)
-	RE.Tooltip:SetCell(1, 2, "", nil, nil, nil, nil, nil, nil, 10, 10)
-	RE.Tooltip:SetCell(1, 3, "", nil, nil, nil, nil, nil, nil, nil, 60)
-	RE.Tooltip:SetCell(1, 4, "", nil, nil, nil, nil, nil, nil, 10, 10)
-	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 60)
+	RE.Tooltip:SetCell(1, 1, "", nil, nil, nil, nil, nil, nil, nil, 70)
+	RE.Tooltip:SetCell(1, 2, "", nil, nil, nil, nil, nil, nil, 5, 5)
+	RE.Tooltip:SetCell(1, 3, "", nil, nil, nil, nil, nil, nil, nil, 70)
+	RE.Tooltip:SetCell(1, 4, "", nil, nil, nil, nil, nil, nil, 5, 5)
+	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 70)
 	RE:GetPrefixes()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:AddLine()
@@ -357,7 +357,7 @@ function RE:FillTooltip()
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d-|r")
 				RE:GetFill(row)
 			end
 		end
@@ -383,7 +383,7 @@ function RE:FillChat()
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r")
 			end
 		end
 	end
@@ -402,7 +402,11 @@ end
 
 function RE:GetShortTime(dbTime)
 	local rawTime = time(date('!*t', GetServerTime())) - dbTime + 1
-	return SecondsToTime(rawTime)
+	if rawTime < 60 then
+		return "<1 Min"
+	else
+		return SecondsToTime(rawTime, true)
+	end
 end
 
 function RE:GetVIPList()
