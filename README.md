@@ -1,8 +1,8 @@
 ﻿# REKeys
 
-[Curse]()
+[Curse](https://www.curseforge.com/wow/addons/rekeys-keystone-manager)
 
-[WoWInterface]()
+[WoWInterface](http://www.wowinterface.com/downloads/fileinfo.php?id=24510)
 
 ## COPYRIGHT
 
