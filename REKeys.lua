@@ -7,7 +7,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 
 --GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
-local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print
+local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
 local SendChatMessage = _G.SendChatMessage
@@ -30,6 +30,7 @@ local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
 local Timer = _G.C_Timer
 local SecondsToTime = _G.SecondsToTime
+local ElvUI = _G.ElvUI
 
 RE.DataVersion = 2
 RE.ThrottleTimer = 0
@@ -97,12 +98,22 @@ function RE:OnEvent(self, event, name, ...)
 			if RE.LDB.text == "|cFF74D06CRE|rKeys" then return end
 			if RE.Outdated then
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
+				if ElvUI then
+					RE.Tooltip:SetTemplate("Transparent", nil, true)
+					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
+					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip.db.colorAlpha)
+				end
 				RE.Tooltip:SetHeaderFont(Game18Font)
 				RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
 				RE.Tooltip:SetHeaderFont(Game15Font)
 				RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
 			else
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
+				if ElvUI then
+					RE.Tooltip:SetTemplate("Transparent", nil, true)
+					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
+					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip.db.colorAlpha)
+				end
 				RE.Tooltip:SetHeaderFont(Game15Font)
 				RE:RequestKeys()
 				RE:FillTooltip()
@@ -305,7 +316,7 @@ function RE:FillTooltip()
 	local fill = false
 	for i = 8, RE.Tooltip:GetLineCount() do
 		if fill then
-			RE.Tooltip:SetLineColor(i, 0, 0, 0, 0.3)
+			RE.Tooltip:SetLineColor(i, 0, 0, 0, 0.35)
 			fill = false
 		else
 			fill = true
