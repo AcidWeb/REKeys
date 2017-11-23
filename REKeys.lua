@@ -8,6 +8,7 @@ LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 
 --GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
 local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
+local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
 local SendChatMessage = _G.SendChatMessage
@@ -35,13 +36,26 @@ local ElvUI = _G.ElvUI
 RE.DataVersion = 2
 RE.ThrottleTimer = 0
 RE.Outdated = false
+RE.Fill = true
 RE.ThrottleTable = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
+RE.DBVIPSort = {}
 SLASH_REKEYS1 = "/rekeys"
 SLASH_REKEYS2 = "/rk"
 
-RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0}
+RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["VIPList"] = {}}
+RE.AceConfig = {
+	type = "group",
+	args = {
+		viplist = {
+			name = L["Pinned characters"],
+			type = "multiselect",
+			get = function(_, player) if RE.Settings.VIPList[player] then return true else return false end end,
+			set = function(_, player, state) if not state then RE.Settings.VIPList[player] = nil else RE.Settings.VIPList[player] = true end end,
+		}
+	}
+}
 RE.AffixSchedule = {
 	{6, 3, 9},
 	{5, 13, 10},
@@ -79,6 +93,9 @@ function RE:OnEvent(self, event, name, ...)
 		if not RE.Settings.ID then
 			RE.Settings.ID = fastrandom(1, 1000000000)
 		end
+		RE.AceConfig.args.viplist.values = RE.GetVIPList
+		_G.LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("REKeys", RE.AceConfig)
+		RE.OptionsMenu = _G.LibStub("AceConfigDialog-3.0"):AddToBlizOptions("REKeys", "REKeys")
 
 		for _, data in pairs(RE.DB) do
 			if data[1] ~= RE.DataVersion then
@@ -132,6 +149,9 @@ function RE:OnEvent(self, event, name, ...)
 		function RE.LDB:OnClick(button)
 			if button == "MiddleButton" and RE.Settings.MyKeys[RE.MyFullName] then
 				SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "GUILD")
+			elseif button == "RightButton" then
+				_G.InterfaceOptionsFrame:Show()
+				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
 			end
 		end
 
@@ -273,7 +293,35 @@ function RE:RequestKeys()
 	RE.ThrottleTimer = timestamp
 end
 
+function RE:FillSorting()
+	wipe(RE.DBNameSort)
+	wipe(RE.DBAltSort)
+	wipe(RE.DBVIPSort)
+	for name, data in pairs(RE.DB) do
+		if RE.Settings.VIPList[name] then
+			tinsert(RE.DBVIPSort, name)
+		else
+			local id = data[6]
+			if not RE.DBAltSort[id] then
+				RE.DBAltSort[id] = {}
+				tinsert(RE.DBNameSort, name)
+			else
+				tinsert(RE.DBAltSort[id], name)
+			end
+		end
+	end
+	sort(RE.DBNameSort)
+	sort(RE.DBVIPSort)
+	for i = 1, #RE.DBNameSort do
+		local data = RE.DB[RE.DBNameSort[i]]
+		if #RE.DBAltSort[data[6]] > 0 then
+			sort(RE.DBAltSort[data[6]])
+		end
+	end
+end
+
 function RE:FillTooltip()
+	local row = 0
 	RE.Tooltip:Clear()
 	RE.Tooltip:SetColumnLayout(5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 	RE.Tooltip:AddLine()
@@ -288,61 +336,50 @@ function RE:FillTooltip()
 	RE.Tooltip:AddSeparator()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:SetColumnLayout(5, "LEFT", "CENTER", "LEFT", "CENTER", "RIGHT")
-	wipe(RE.DBNameSort)
-	wipe(RE.DBAltSort)
-	for name, data in pairs(RE.DB) do
-		local id = data[6]
-		if not RE.DBAltSort[id] then
-			RE.DBAltSort[id] = {}
-			tinsert(RE.DBNameSort, name)
-		else
-			tinsert(RE.DBAltSort[id], name)
+	RE:FillSorting()
+	if #RE.DBVIPSort > 0 then
+		for i = 1, #RE.DBVIPSort do
+			local name = RE.DBVIPSort[i]
+			local data = RE.DB[name]
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			RE:GetFill(row)
 		end
+		RE.Tooltip:AddLine()
+		RE.Tooltip:AddSeparator()
+		RE.Tooltip:AddLine()
 	end
-	sort(RE.DBNameSort)
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		RE:GetFill(row)
 		if #RE.DBAltSort[data[6]] > 0 then
-			sort(RE.DBAltSort[data[6]])
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				RE:GetFill(row)
 			end
 		end
 	end
-	local fill = false
-	for i = 8, RE.Tooltip:GetLineCount() do
-		if fill then
-			RE.Tooltip:SetLineColor(i, 0, 0, 0, 0.35)
-			fill = false
-		else
-			fill = true
-		end
-	end
+	RE.Fill = true
 end
 
 function RE:FillChat()
-	wipe(RE.DBNameSort)
-	wipe(RE.DBAltSort)
-	for name, data in pairs(RE.DB) do
-		local id = data[6]
-		if not RE.DBAltSort[id] then
-			RE.DBAltSort[id] = {}
-			tinsert(RE.DBNameSort, name)
-		else
-			tinsert(RE.DBAltSort[id], name)
+	RE:FillSorting()
+	if #RE.DBVIPSort > 0 then
+		for i = 1, #RE.DBVIPSort do
+			local name = RE.DBVIPSort[i]
+			local data = RE.DB[name]
+			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
+		print("-----")
 	end
-	sort(RE.DBNameSort)
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
 		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		if #RE.DBAltSort[data[6]] > 0 then
-			sort(RE.DBAltSort[data[6]])
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
@@ -368,6 +405,19 @@ function RE:GetShortTime(dbTime)
 	return SecondsToTime(rawTime)
 end
 
+function RE:GetVIPList()
+	local players = {}
+	local viplist = {}
+	for name, _ in pairs(RE.DB) do
+		tinsert(players, name)
+	end
+	sort(players)
+	for i = 1 , #players do
+		viplist[players[i]] = strsplit("-", players[i])
+	end
+	return viplist
+end
+
 function RE:GetPrefixes()
 	local affixes = {{0, 0, 0}, {0, 0, 0}}
 	if RE.Settings.CurrentWeek > 0 then
@@ -379,6 +429,15 @@ function RE:GetPrefixes()
 	RE.Tooltip:AddHeader(GetAffixInfo(affixes[1][1]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][2]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][3]) or "?")
 	RE.Tooltip:AddLine()
 	RE.Tooltip:AddHeader(GetAffixInfo(affixes[2][1]) or "?", "|cff00ff00|||r", GetAffixInfo(affixes[2][2]) or "?", "|cff00ff00|||r", GetAffixInfo(affixes[2][3]) or "?")
+end
+
+function RE:GetFill(row)
+	if RE.Fill then
+		RE.Tooltip:SetLineColor(row, 0, 0, 0, 0.35)
+		RE.Fill = false
+	else
+		RE.Fill = true
+	end
 end
 
 function RE:KeySearchDelay()
