@@ -6,8 +6,9 @@ local QTIP = LibStub("LibQTip-1.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 
---GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font
+--GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font, GameTooltipHeaderText
 local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
+local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
 local SendAddonMessage = _G.SendAddonMessage
@@ -106,6 +107,10 @@ function RE:OnEvent(self, event, name, ...)
 			end
 		end
 
+		RE.TooltipHeaderFont = CreateFont("REKeysTooltipHeaderFont")
+		RE.TooltipHeaderFont:CopyFontObject(GameTooltipHeaderText)
+		RE.TooltipHeaderFont:SetFont(select(1, RE.TooltipHeaderFont:GetFont()), 15)
+
 		RE.LDB = LDB:NewDataObject("REKeys", {
 			type = "data source",
 			text = "|cFF74D06CRE|rKeys",
@@ -131,7 +136,7 @@ function RE:OnEvent(self, event, name, ...)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
 					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip.db.colorAlpha)
 				end
-				RE.Tooltip:SetHeaderFont(Game15Font)
+				RE.Tooltip:SetHeaderFont(RE.TooltipHeaderFont)
 				RE:RequestKeys()
 				RE:FillTooltip()
 			end
@@ -430,9 +435,9 @@ function RE:GetPrefixes()
 		scheduleWeek = RE.Settings.CurrentWeek % #RE.AffixSchedule + 1
 		affixes[2] = RE.AffixSchedule[scheduleWeek]
 	end
-	RE.Tooltip:AddHeader(GetAffixInfo(affixes[1][1]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][2]) or "?", "|cffff0000|||r", GetAffixInfo(affixes[1][3]) or "?")
+	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(affixes[1][1]).."|r" or "|cffffffff?|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(affixes[1][2]).."|r" or "|cffffffff?|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(affixes[1][3]).."|r" or "|cffffffff?|r")
 	RE.Tooltip:AddLine()
-	RE.Tooltip:AddHeader(GetAffixInfo(affixes[2][1]) or "?", "|cff00ff00|||r", GetAffixInfo(affixes[2][2]) or "?", "|cff00ff00|||r", GetAffixInfo(affixes[2][3]) or "?")
+	RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[2][1]).."|r" or "|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2][2]).."|r" or "|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2][3]).."|r" or "|cffbbbbbb?|r")
 end
 
 function RE:GetFill(row)
