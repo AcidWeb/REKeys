@@ -153,7 +153,11 @@ function RE:OnEvent(self, event, name, ...)
 		end
 		function RE.LDB:OnClick(button)
 			if button == "MiddleButton" and RE.Settings.MyKeys[RE.MyFullName] then
-				SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "GUILD")
+				if IsInGroup() then
+					SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "PARTY")
+				else
+					SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "GUILD")
+				end
 			elseif button == "RightButton" then
 				_G.InterfaceOptionsFrame:Show()
 				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
