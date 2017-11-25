@@ -337,7 +337,6 @@ function RE:FillTooltip()
 	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 70)
 	RE:GetPrefixes()
 	RE.Tooltip:AddLine()
-	RE.Tooltip:AddLine()
 	RE.Tooltip:AddSeparator()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:SetColumnLayout(5, "LEFT", "CENTER", "LEFT", "CENTER", "RIGHT")
@@ -368,6 +367,7 @@ function RE:FillTooltip()
 		end
 	end
 	RE.Fill = true
+	RE.Tooltip:AddLine()
 end
 
 function RE:FillChat()
