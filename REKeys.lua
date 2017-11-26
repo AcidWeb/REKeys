@@ -21,6 +21,9 @@ local GetNumFriends = _G.GetNumFriends
 local GetFriendInfo = _G.GetFriendInfo
 local GetMapInfo = _G.C_ChallengeMode.GetMapInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
+local GetMapTable = _G.C_ChallengeMode.GetMapTable
+local GetMapPlayerStats = _G.C_ChallengeMode.GetMapPlayerStats
+local RequestMapInfo = _G.C_ChallengeMode.RequestMapInfo
 local BNGetNumFriends = _G.BNGetNumFriends
 local BNGetFriendInfo = _G.BNGetFriendInfo
 local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
@@ -34,8 +37,9 @@ local Timer = _G.C_Timer
 local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 
-RE.DataVersion = 2
+RE.DataVersion = 3
 RE.ThrottleTimer = 0
+RE.BestRun = 0
 RE.Outdated = false
 RE.Fill = true
 RE.ThrottleTable = {}
@@ -179,10 +183,12 @@ function RE:OnEvent(self, event, name, ...)
 		RE.MyFullName = RE.MyName.."-"..RE.MyRealm
 		RE.MyFaction = UnitFactionGroup("player")
 		RE.MyClass = select(2, UnitClass("player"))
+		RequestMapInfo()
 		Timer.After(5, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
-		Timer.After(1, function() RE:FindKey(true) end)
+		RequestMapInfo()
+		Timer.After(2, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, channel, sender = ...
 		msg = {strsplit(";", msg)}
@@ -198,18 +204,18 @@ function RE:OnEvent(self, event, name, ...)
 					RE.ThrottleTable[sender] = timestamp
 					if channel == "PARTY" or channel == "RAID" then
 						for name, data in pairs(RE.Settings.MyKeys) do
-							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID..";"..sender, channel)
+							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID..";"..data.BestRun..";"..sender, channel)
 						end
 					else
 						for name, data in pairs(RE.Settings.MyKeys) do
-							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID, "WHISPER", sender)
+							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID..";"..data.BestRun, "WHISPER", sender)
 						end
 					end
 				end
 			elseif msg[1] == "KD" then
-				if msg[8] and msg[8] ~= RE.MyFullName then return end
+				if msg[9] and msg[9] ~= RE.MyFullName then return end
 				if not RE.DB[msg[3]] then RE.DB[msg[3]] = {} end
-				RE.DB[msg[3]] = {RE.DataVersion, time(date('!*t', GetServerTime())), msg[4], msg[5], msg[6], msg[7]}
+				RE.DB[msg[3]] = {RE.DataVersion, time(date('!*t', GetServerTime())), msg[4], tonumber(msg[5]), tonumber(msg[6]), tonumber(msg[7]), tonumber(msg[8])}
 				if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0) then
 					RE.UpdateTimer = Timer.NewTimer(2, RE.FillTooltip)
 				end
@@ -232,6 +238,10 @@ function RE:FindKey(dungeonCompleted)
 		end
 	end
 
+	if dungeonCompleted then
+		RE.BestRun = RE:GetBestRun()
+	end
+
 	if rawKey == "" then
 		if RE.Settings.MyKeys[RE.MyFullName] ~= nil then
 			wipe(RE.DB)
@@ -251,15 +261,15 @@ function RE:FindKey(dungeonCompleted)
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		local keyData = {strsplit(':', rawKey)}
 
-		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = keyData[2], ["DungeonLevel"] = keyData[3], ["Class"] = RE.MyClass, ["RawKey"] = rawKey}
-		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID}
+		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keyData[2]), ["DungeonLevel"] = tonumber(keyData[3]), ["Class"] = RE.MyClass, ["RawKey"] = rawKey, ["BestRun"] = RE.BestRun}
+		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
 		local keyDetails = RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
 		if dungeonCompleted and IsInGroup() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..keyDetails, "PARTY")
 		end
 		RE.LDB.text = "|cffe6cc80"..keyDetails.."|r"
 
-		if tonumber(RE.Settings.MyKeys[RE.MyFullName].DungeonLevel) >= 7 and RE.Settings.CurrentWeek == 0 then
+		if RE.Settings.MyKeys[RE.MyFullName].DungeonLevel >= 7 and RE.Settings.CurrentWeek == 0 then
 			local affixA, affixB = tonumber(keyData[4]), tonumber(keyData[5])
 			for i, affixes in ipairs(RE.AffixSchedule) do
 				if affixA == affixes[1] and affixB == affixes[2] then
@@ -350,7 +360,7 @@ function RE:FillTooltip()
 		for i = 1, #RE.DBVIPSort do
 			local name = RE.DBVIPSort[i]
 			local data = RE.DB[name]
-			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			RE:GetFill(row)
 		end
 		RE.Tooltip:AddLine()
@@ -360,13 +370,13 @@ function RE:FillTooltip()
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		RE:GetFill(row)
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r", nil, "|cff9d9d9d-|r")
+				row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
 				RE:GetFill(row)
 			end
 		end
@@ -381,19 +391,19 @@ function RE:FillChat()
 		for i = 1, #RE.DBVIPSort do
 			local name = RE.DBVIPSort[i]
 			local data = RE.DB[name]
-			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
 		print("-----")
 	end
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r")
+				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
 			end
 		end
 	end
@@ -454,7 +464,27 @@ function RE:GetFill(row)
 	end
 end
 
+function RE:GetBestRun()
+	local maps = GetMapTable()
+	local best = 0
+	for i = 1, #maps do
+		local level = select(3, GetMapPlayerStats(maps[i]))
+		if not level then level = 0 end
+		if level > best then best = level end
+	end
+	return best
+end
+
+function RE:GetBestRunString(bestRun)
+	if bestRun > 1 then
+		return " [+"..bestRun.."]"
+	else
+		return ""
+	end
+end
+
 function RE:KeySearchDelay()
+	RE.BestRun = RE:GetBestRun()
 	RE:FindKey()
 	_G.REKeys:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
