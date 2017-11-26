@@ -236,7 +236,8 @@ function RE:FindKey(dungeonCompleted)
 		if RE.Settings.MyKeys[RE.MyFullName] ~= nil then
 			wipe(RE.DB)
 			RE.Settings.MyKeys = {}
-			RE.Settings.CurrentWeek = 0
+			if RE.Settings.CurrentWeek ~= 0 then RE.Settings.CurrentWeek = RE.Settings.CurrentWeek + 1 end
+			if RE.Settings.CurrentWeek == 13 then RE.Settings.CurrentWeek = 1 end
 		end
 		RE.Settings.MyKeys[RE.MyFullName] = nil
 		RE.DB[RE.MyFullName] = nil
