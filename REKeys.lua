@@ -188,7 +188,7 @@ function RE:OnEvent(self, event, name, ...)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
-		Timer.After(2, function() RE:FindKey(true) end)
+		Timer.After(1.5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, channel, sender = ...
 		msg = {strsplit(";", msg)}
@@ -240,12 +240,17 @@ function RE:FindKey(dungeonCompleted)
 
 	if dungeonCompleted then
 		RE.BestRun = RE:GetBestRun()
+		if RE.Settings.MyKeys[RE.MyFullName] then
+			RE.Settings.MyKeys[RE.MyFullName]["BestRun"] = RE.BestRun
+			RE.DB[RE.MyFullName][7] = RE.BestRun
+		end
 	end
 
 	if rawKey == "" then
 		if RE.Settings.MyKeys[RE.MyFullName] ~= nil then
 			wipe(RE.DB)
 			RE.Settings.MyKeys = {}
+			RE.BestRun = 0
 			if RE.Settings.CurrentWeek ~= 0 then RE.Settings.CurrentWeek = RE.Settings.CurrentWeek + 1 end
 			if RE.Settings.CurrentWeek == 13 then RE.Settings.CurrentWeek = 1 end
 		end
@@ -263,13 +268,12 @@ function RE:FindKey(dungeonCompleted)
 
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keyData[2]), ["DungeonLevel"] = tonumber(keyData[3]), ["Class"] = RE.MyClass, ["RawKey"] = rawKey, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
-		local keyDetails = RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
 		if dungeonCompleted and IsInGroup() then
-			SendChatMessage("[REKeys] "..L["My new key"]..": "..keyDetails, "PARTY")
+			SendChatMessage("[REKeys] "..L["My new key"]..": "..rawKey, "PARTY")
 		end
-		RE.LDB.text = "|cffe6cc80"..keyDetails.."|r"
+		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
 
-		if RE.Settings.MyKeys[RE.MyFullName].DungeonLevel >= 7 and RE.Settings.CurrentWeek == 0 then
+		if RE.Settings.CurrentWeek == 0 and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel >= 7 then
 			local affixA, affixB = tonumber(keyData[4]), tonumber(keyData[5])
 			for i, affixes in ipairs(RE.AffixSchedule) do
 				if affixA == affixes[1] and affixB == affixes[2] then
