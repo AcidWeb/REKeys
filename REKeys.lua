@@ -7,7 +7,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
 
 --GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font, GameTooltipHeaderText
-local strsplit, pairs, ipairs, select, sbyte, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
+local strsplit, pairs, ipairs, select, sbyte, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
 local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
@@ -33,15 +33,19 @@ local UnitFactionGroup = _G.UnitFactionGroup
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
+local IsAddOnLoaded = _G.IsAddOnLoaded
+local IsShiftKeyDown = _G.IsShiftKeyDown
 local Timer = _G.C_Timer
 local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
+local RaiderIO = _G.RaiderIO
 
 RE.DataVersion = 3
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
 RE.Fill = true
+RE.RaiderIO = false
 RE.ThrottleTable = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
@@ -74,6 +78,10 @@ RE.AffixSchedule = {
 	{8, 12, 10},
 	{7, 13, 9},
 	{11, 14, 10}
+}
+RE.Factions = {
+	["Alliance"] = 1,
+	["Horde"] = 2,
 }
 
 -- Event functions
@@ -221,6 +229,8 @@ function RE:OnEvent(self, event, name, ...)
 				end
 			end
 		end
+	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
+		RE.FillTooltip()
 	end
 end
 
@@ -364,7 +374,11 @@ function RE:FillTooltip()
 		for i = 1, #RE.DBVIPSort do
 			local name = RE.DBVIPSort[i]
 			local data = RE.DB[name]
-			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			if RE.RaiderIO and IsShiftKeyDown() then
+				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			else
+				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			end
 			RE:GetFill(row)
 		end
 		RE.Tooltip:AddLine()
@@ -374,13 +388,21 @@ function RE:FillTooltip()
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		if RE.RaiderIO and IsShiftKeyDown() then
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		else
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		end
 		RE:GetFill(row)
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
+				if RE.RaiderIO and IsShiftKeyDown() then
+					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d-|r")
+				else
+					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
+				end
 				RE:GetFill(row)
 			end
 		end
@@ -487,11 +509,29 @@ function RE:GetBestRunString(bestRun)
 	end
 end
 
+function RE:GetRaiderIOScore(name)
+	local data = RaiderIO.GetScore(name, nil, RE.Factions[RE.MyFaction])
+	if data then
+		local r, g, b = RaiderIO.GetScoreColor(data.allScore)
+		local output = "|cff"..sformat("%02x%02x%02x", r*255, g*255, b*255)..data.allScore.."|r "
+		if data.isTank then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:0:19:22:41|t" end
+		if data.isHealer then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:1:20|t" end
+		if data.isDPS then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:22:41|t" end
+		return output
+	else
+		return "-"
+	end
+end
+
 function RE:KeySearchDelay()
 	RE.BestRun = RE:GetBestRun()
 	RE:FindKey()
 	_G.REKeys:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
+	if IsAddOnLoaded("RaiderIO") then
+		RE.RaiderIO = true
+		_G.REKeys:RegisterEvent("MODIFIER_STATE_CHANGED")
+	end
 end
 
 function RE:CSize(char)
