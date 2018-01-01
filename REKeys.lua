@@ -30,6 +30,7 @@ local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
 local UnitFullName = _G.UnitFullName
 local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
+local IsQuestBounty = _G.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
@@ -231,6 +232,11 @@ function RE:OnEvent(self, event, name, ...)
 		end
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
 		RE.FillTooltip()
+	elseif event == "QUEST_ACCEPTED" then
+		local questID = ...
+		if IsQuestBounty(questID) then
+			RE:FindKey()
+		end
 	end
 end
 
@@ -261,8 +267,7 @@ function RE:FindKey(dungeonCompleted)
 			wipe(RE.DB)
 			RE.Settings.MyKeys = {}
 			RE.BestRun = 0
-			if RE.Settings.CurrentWeek ~= 0 then RE.Settings.CurrentWeek = RE.Settings.CurrentWeek + 1 end
-			if RE.Settings.CurrentWeek == 13 then RE.Settings.CurrentWeek = 1 end
+			RE.Settings.CurrentWeek = 0
 		end
 		RE.Settings.MyKeys[RE.MyFullName] = nil
 		RE.DB[RE.MyFullName] = nil
@@ -527,6 +532,7 @@ function RE:KeySearchDelay()
 	RE.BestRun = RE:GetBestRun()
 	RE:FindKey()
 	_G.REKeys:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+	_G.REKeys:RegisterEvent("QUEST_ACCEPTED")
 	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if IsAddOnLoaded("RaiderIO") then
 		RE.RaiderIO = true
