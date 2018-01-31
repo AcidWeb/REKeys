@@ -474,16 +474,20 @@ function RE:GetVIPList()
 end
 
 function RE:GetPrefixes()
-	local affixes = {{0, 0, 0}, {0, 0, 0}}
 	if RE.Settings.CurrentWeek > 0 then
+		local affixes = {{}, {}}
 		local scheduleWeek = RE.Settings.CurrentWeek - 1 % #RE.AffixSchedule + 1
 		affixes[1] = RE.AffixSchedule[scheduleWeek]
 		scheduleWeek = RE.Settings.CurrentWeek % #RE.AffixSchedule + 1
 		affixes[2] = RE.AffixSchedule[scheduleWeek]
+		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(affixes[1][1]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(affixes[1][2]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(affixes[1][3]).."|r")
+		RE.Tooltip:AddLine()
+		RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[2][1]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2][2]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2][3]).."|r")
+	else
+		RE.Tooltip:AddHeader("|cffffffff?|r", "|cffff0000|||r", "|cffffffff?|r", "|cffff0000|||r", "|cffffffff?|r")
+		RE.Tooltip:AddLine()
+		RE.Tooltip:AddHeader("|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb?|r")
 	end
-	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(affixes[1][1]).."|r" or "|cffffffff?|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(affixes[1][2]).."|r" or "|cffffffff?|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(affixes[1][3]).."|r" or "|cffffffff?|r")
-	RE.Tooltip:AddLine()
-	RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[2][1]).."|r" or "|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2][2]).."|r" or "|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2][3]).."|r" or "|cffbbbbbb?|r")
 end
 
 function RE:GetFill(row)
