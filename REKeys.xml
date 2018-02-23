@@ -1,11 +1,11 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
 
 	<Script file="REKeys.lua"/>
-	
-	<Frame name="REKeys">
+
+	<Frame name="REKeysFrame">
 		<Scripts>
-			<OnLoad>REKeysNamespace:OnLoad(self)</OnLoad>
-			<OnEvent>REKeysNamespace:OnEvent(self, event, ...)</OnEvent>
+			<OnLoad>REKeys:OnLoad(self)</OnLoad>
+			<OnEvent>REKeys:OnEvent(self, event, ...)</OnEvent>
 		</Scripts>
 	</Frame>
 

@@ -1,10 +1,10 @@
 local _G = _G
-_G.REKeysNamespace = {["AceBucket"] = {}}
-local RE = REKeysNamespace
+local _, RE = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local QTIP = LibStub("LibQTip-1.0")
+local BUCKET = LibStub("AceBucket-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
-LibStub("AceBucket-3.0"):Embed(RE.AceBucket)
+_G.REKeys = RE
 
 --GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font, GameTooltipHeaderText
 local strsplit, pairs, ipairs, select, sbyte, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
@@ -535,12 +535,12 @@ end
 function RE:KeySearchDelay()
 	RE.BestRun = RE:GetBestRun()
 	RE:FindKey()
-	_G.REKeys:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-	_G.REKeys:RegisterEvent("QUEST_ACCEPTED")
-	RE.AceBucket:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
+	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
+	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if IsAddOnLoaded("RaiderIO") then
 		RE.RaiderIO = true
-		_G.REKeys:RegisterEvent("MODIFIER_STATE_CHANGED")
+		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
 	end
 end
 
