@@ -6,7 +6,7 @@ local BUCKET = LibStub("AceBucket-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 _G.REKeys = RE
 
---GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, Game15Font, Game18Font, GameTooltipHeaderText
+--GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, LE_PARTY_CATEGORY_HOME, LE_PARTY_CATEGORY_INSTANCE, Game15Font, Game18Font, GameTooltipHeaderText
 local strsplit, pairs, ipairs, select, sbyte, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
 local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
@@ -211,7 +211,7 @@ function RE:OnEvent(self, event, name, ...)
 				local timestamp = time(date('!*t', GetServerTime()))
 				if timestamp - RE.ThrottleTable[sender] > 30 then
 					RE.ThrottleTable[sender] = timestamp
-					if channel == "PARTY" or channel == "RAID" then
+					if channel == "PARTY" or channel == "RAID" or channel == "INSTANCE_CHAT" then
 						for name, data in pairs(RE.Settings.MyKeys) do
 							SendAddonMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.ID..";"..data.BestRun..";"..sender, channel)
 						end
@@ -305,8 +305,10 @@ end
 function RE:RequestKeys()
 	local timestamp = time(date('!*t', GetServerTime()))
 	if timestamp - RE.ThrottleTimer < 5 then return end
-	if IsInGroup() or IsInRaid() then
+	if IsInGroup(LE_PARTY_CATEGORY_HOME) or IsInRaid(LE_PARTY_CATEGORY_HOME) then
 		SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "RAID")
+	elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and not IsInRaid(LE_PARTY_CATEGORY_INSTANCE) then
+		SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "INSTANCE_CHAT")
 	end
 
 	if IsInGuild() then
@@ -316,7 +318,10 @@ function RE:RequestKeys()
 	for i = 1, GetNumFriends() do
 		local name, _, _, _, connected = GetFriendInfo(i)
 		if name and connected then
-			SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", name.."-"..RE.MyRealm)
+			if not strfind(name, "-") then
+				name = name.."-"..RE.MyRealm
+			end
+			SendAddonMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", name)
 		end
 	end
 
