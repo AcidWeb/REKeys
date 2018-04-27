@@ -1,7 +1,7 @@
 ## Interface: 70300
 ## Title: |cFF74D06CRE|rKeys
 ## Notes: Collect information about keystones owned by your friends.
-## Version: 1.3.7
+## Version: 1.3.8
 ## Author: AcidWeb
 ## SavedVariables: REKeysDB, REKeysSettings
 
