@@ -136,7 +136,7 @@ function RE:OnEvent(self, event, name, ...)
 				if ElvUI then
 					RE.Tooltip:SetTemplate("Transparent", nil, true)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
-					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip.db.colorAlpha)
+					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 				end
 				RE.Tooltip:SetHeaderFont(Game18Font)
 				RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
@@ -147,7 +147,7 @@ function RE:OnEvent(self, event, name, ...)
 				if ElvUI then
 					RE.Tooltip:SetTemplate("Transparent", nil, true)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
-					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip.db.colorAlpha)
+					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 				end
 				RE.Tooltip:SetHeaderFont(RE.TooltipHeaderFont)
 				RE:RequestKeys()
