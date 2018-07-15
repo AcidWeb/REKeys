@@ -10,20 +10,21 @@ _G.REKeys = RE
 local strsplit, pairs, ipairs, select, sbyte, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
 local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
-local RegisterAddonMessagePrefix = _G.RegisterAddonMessagePrefix
-local SendAddonMessage = _G.SendAddonMessage
+local RegisterAddonMessagePrefix = _G.C_ChatInfo.RegisterAddonMessagePrefix
+local SendAddonMessage = _G.C_ChatInfo.SendAddonMessage
 local SendChatMessage = _G.SendChatMessage
 local GetServerTime = _G.GetServerTime
-local GetContainerNumSlots = _G.GetContainerNumSlots
-local GetContainerItemID = _G.GetContainerItemID
-local GetContainerItemLink = _G.GetContainerItemLink
 local GetNumFriends = _G.GetNumFriends
 local GetFriendInfo = _G.GetFriendInfo
 local GetMapInfo = _G.C_ChallengeMode.GetMapInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local GetMapTable = _G.C_ChallengeMode.GetMapTable
-local GetMapPlayerStats = _G.C_ChallengeMode.GetMapPlayerStats
-local RequestMapInfo = _G.C_ChallengeMode.RequestMapInfo
+local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
+local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
+local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
+local GetWeeklyBestForMap = _G.C_MythicPlus.GetWeeklyBestForMap
+local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
+local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
 local BNGetNumFriends = _G.BNGetNumFriends
 local BNGetFriendInfo = _G.BNGetFriendInfo
 local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
@@ -66,6 +67,7 @@ RE.AceConfig = {
 		}
 	}
 }
+--TODO Update schedule
 RE.AffixSchedule = {
 	{ 6, 3, 9 },
 	{ 5, 13, 10 },
@@ -84,6 +86,13 @@ RE.Factions = {
 	["Alliance"] = 1,
 	["Horde"] = 2,
 }
+
+local function ElvUISwag(sender)
+  if sender == "Livarax-BurningLegion" then
+    return [[|TInterface\PvPRankBadges\PvPRank09:0|t ]]
+  end
+  return nil
+end
 
 -- Event functions
 
@@ -166,11 +175,7 @@ function RE:OnEvent(self, event, name, ...)
 		end
 		function RE.LDB:OnClick(button)
 			if button == "MiddleButton" and RE.Settings.MyKeys[RE.MyFullName] then
-				if IsInGroup() then
-					SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "PARTY")
-				else
-					SendChatMessage(RE.Settings.MyKeys[RE.MyFullName].RawKey, "GUILD")
-				end
+				SendChatMessage(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, IsInGroup() and "PARTY" or "GUILD")
 			elseif button == "RightButton" then
 				_G.InterfaceOptionsFrame:Show()
 				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
@@ -185,6 +190,10 @@ function RE:OnEvent(self, event, name, ...)
 			end
 		end
 
+		if ElvUI then
+			_G.ElvUI[1]:GetModule("Chat"):AddPluginIcons(ElvUISwag)
+		end
+
 		RegisterAddonMessagePrefix("REKeys")
 		self:UnregisterEvent("ADDON_LOADED")
 	elseif event == "PLAYER_ENTERING_WORLD" then
@@ -193,10 +202,12 @@ function RE:OnEvent(self, event, name, ...)
 		RE.MyFaction = UnitFactionGroup("player")
 		RE.MyClass = select(2, UnitClass("player"))
 		RequestMapInfo()
+		RequestCurrentAffixes()
 		Timer.After(5, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
+		RequestCurrentAffixes()
 		Timer.After(1.5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, channel, sender = ...
@@ -243,16 +254,7 @@ end
 -- Main functions
 
 function RE:FindKey(dungeonCompleted)
-	local rawKey = ""
-	for bag = 0, NUM_BAG_SLOTS do
-		local bagSlots = GetContainerNumSlots(bag)
-		for slot = 1, bagSlots do
-			if GetContainerItemID(bag, slot) == 138019 then
-				rawKey = GetContainerItemLink(bag, slot)
-				break
-			end
-		end
-	end
+	local keystone = GetOwnedKeystoneChallengeMapID()
 
 	if dungeonCompleted then
 		RE.BestRun = RE:GetBestRun()
@@ -262,7 +264,7 @@ function RE:FindKey(dungeonCompleted)
 		end
 	end
 
-	if rawKey == "" then
+	if not keystone then
 		if RE.Settings.MyKeys[RE.MyFullName] ~= nil then
 			wipe(RE.DB)
 			RE.Settings.MyKeys = {}
@@ -273,25 +275,25 @@ function RE:FindKey(dungeonCompleted)
 		RE.DB[RE.MyFullName] = nil
 		RE.LDB.text = "|cffe6cc80-|r"
 	else
+		local keystoneLevel = GetOwnedKeystoneLevel()
 		if not RE.Settings.MyKeys[RE.MyFullName] then
 			RE.Settings.MyKeys[RE.MyFullName] = {}
-		elseif RE.Settings.MyKeys[RE.MyFullName].RawKey == rawKey and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
+		elseif RE.Settings.MyKeys[RE.MyFullName].DungeonID == keystone and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel == keystoneLevel and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
 			return
 		end
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
-		local keyData = {strsplit(':', rawKey)}
-
-		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keyData[2]), ["DungeonLevel"] = tonumber(keyData[3]), ["Class"] = RE.MyClass, ["RawKey"] = rawKey, ["BestRun"] = RE.BestRun}
+		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
+		local dungeonStr = RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
 		if dungeonCompleted and IsInGroup() then
-			SendChatMessage("[REKeys] "..L["My new key"]..": "..rawKey, "PARTY")
+			SendChatMessage("[REKeys] "..L["My new key"]..": "..dungeonStr, "PARTY")
 		end
-		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
+		RE.LDB.text = "|cffe6cc80"..dungeonStr.."|r"
 
-		if RE.Settings.CurrentWeek == 0 and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel >= 7 then
-			local affixA, affixB = tonumber(keyData[4]), tonumber(keyData[5])
+		if RE.Settings.CurrentWeek == 0 then
+			local currentAffixes = GetCurrentAffixes()
 			for i, affixes in ipairs(RE.AffixSchedule) do
-				if affixA == affixes[1] and affixB == affixes[2] then
+				if currentAffixes[1] == affixes[1] and currentAffixes[2] == affixes[2] and currentAffixes[3] == affixes[3] then
 					RE.Settings.CurrentWeek = i
 					break
 				end
@@ -508,7 +510,7 @@ function RE:GetBestRun()
 	local maps = GetMapTable()
 	local best = 0
 	for i = 1, #maps do
-		local level = select(3, GetMapPlayerStats(maps[i]))
+		local level = select(2, GetWeeklyBestForMap(maps[i]))
 		if not level then level = 0 end
 		if level > best then best = level end
 	end
