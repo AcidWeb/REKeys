@@ -9,7 +9,14 @@ externals:
   Libs/AceConfigDialog-3.0: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0/AceConfigDialog-3.0
   Libs/AceConfigRegistry-3.0: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0/AceConfigRegistry-3.0
   Libs/AceLocale-3.0: https://repos.wowace.com/wow/ace3/trunk/AceLocale-3.0
+  Libs/AceEvent-3.0: https://repos.wowace.com/wow/ace3/trunk/AceEvent-3.0
+  Libs/AceTimer-3.0: https://repos.wowace.com/wow/ace3/trunk/AceTimer-3.0
   Libs/AceBucket-3.0: https://repos.wowace.com/wow/ace3/trunk/AceBucket-3.0
 
 ignore:
   - README.md
+  - Libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
+  - Libs/LibDataBroker-1.1/README.textile
+  - Libs/LibQTip-1.0/lib.xml
+  - Libs/LibQTip-1.0/LibQTip-1.0.toc
+  - Libs/LibQTip-1.0/LICENSE.txt
