@@ -16,7 +16,7 @@ local SendChatMessage = _G.SendChatMessage
 local GetServerTime = _G.GetServerTime
 local GetNumFriends = _G.GetNumFriends
 local GetFriendInfo = _G.GetFriendInfo
-local GetMapInfo = _G.C_ChallengeMode.GetMapInfo
+local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local GetMapTable = _G.C_ChallengeMode.GetMapTable
 local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
@@ -42,7 +42,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 3
+RE.DataVersion = 4
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -175,7 +175,7 @@ function RE:OnEvent(self, event, name, ...)
 		end
 		function RE.LDB:OnClick(button)
 			if button == "MiddleButton" and RE.Settings.MyKeys[RE.MyFullName] then
-				SendChatMessage(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, IsInGroup() and "PARTY" or "GUILD")
+				SendChatMessage(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, IsInGroup() and "PARTY" or "GUILD")
 			elseif button == "RightButton" then
 				_G.InterfaceOptionsFrame:Show()
 				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
@@ -284,7 +284,7 @@ function RE:FindKey(dungeonCompleted)
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
-		local dungeonStr = RE:GetShortMapName(GetMapInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
+		local dungeonStr = RE:GetShortMapName(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
 		if dungeonCompleted and IsInGroup() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..dungeonStr, "PARTY")
 		end
@@ -389,7 +389,7 @@ function RE:FillTooltip()
 			if RE.RaiderIO and IsShiftKeyDown() then
 				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			else
-				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			end
 			RE:GetFill(row)
 		end
@@ -403,7 +403,7 @@ function RE:FillTooltip()
 		if RE.RaiderIO and IsShiftKeyDown() then
 			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		else
-			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
 		RE:GetFill(row)
 		if #RE.DBAltSort[data[6]] > 0 then
@@ -413,7 +413,7 @@ function RE:FillTooltip()
 				if RE.RaiderIO and IsShiftKeyDown() then
 					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d-|r")
 				else
-					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
+					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
 				end
 				RE:GetFill(row)
 			end
@@ -429,19 +429,19 @@ function RE:FillChat()
 		for i = 1, #RE.DBVIPSort do
 			local name = RE.DBVIPSort[i]
 			local data = RE.DB[name]
-			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
 		print("-----")
 	end
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
+				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
 			end
 		end
 	end
