@@ -23,6 +23,9 @@ local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallenge
 local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
 local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
 local GetWeeklyBestForMap = _G.C_MythicPlus.GetWeeklyBestForMap
+local GetContainerNumSlots = _G.GetContainerNumSlots
+local GetContainerItemID = _G.GetContainerItemID
+local GetContainerItemLink = _G.GetContainerItemLink
 local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
 local BNGetNumFriends = _G.BNGetNumFriends
@@ -174,8 +177,20 @@ function RE:OnEvent(self, event, name, ...)
 			RE.Tooltip = nil
 		end
 		function RE.LDB:OnClick(button)
-			if button == "MiddleButton" and RE.Settings.MyKeys[RE.MyFullName] then
-				SendChatMessage(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, IsInGroup() and "PARTY" or "GUILD")
+			if button == "MiddleButton" then
+				local keyLink
+				for bag = 0, NUM_BAG_SLOTS do
+					local bagSlots = GetContainerNumSlots(bag)
+					for slot = 1, bagSlots do
+						if GetContainerItemID(bag, slot) == 138019 then
+							keyLink = GetContainerItemLink(bag, slot)
+							break
+						end
+					end
+				end
+				if keyLink then
+					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
+				end
 			elseif button == "RightButton" then
 				_G.InterfaceOptionsFrame:Show()
 				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
