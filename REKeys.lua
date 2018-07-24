@@ -497,7 +497,9 @@ end
 
 function RE:GetPrefixes()
 	local currentAffixes = GetCurrentAffixes()
-	RE.Tooltip:AddHeader("", "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4]).."|r", "|cffff0000>|r", "")
+	if currentAffixes[4] then
+		RE.Tooltip:AddHeader("", "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4]).."|r", "|cffff0000>|r", "")
+	end
 	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3]).."|r")
 	RE.Tooltip:AddLine()
 	if RE.Settings.CurrentWeek > 0 then
