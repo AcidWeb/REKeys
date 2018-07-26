@@ -58,13 +58,23 @@ RE.DBVIPSort = {}
 SLASH_REKEYS1 = "/rekeys"
 SLASH_REKEYS2 = "/rk"
 
-RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["VIPList"] = {}}
+RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["VIPList"] = {}, ["FullDungeonName"] = false}
 RE.AceConfig = {
 	type = "group",
 	args = {
+		dungeonname = {
+			name = L["Don't shorten dungeon names"],
+			desc = L["When checked tooltip will display full dungeon name."],
+			type = "toggle",
+			width = "full",
+			order = 1,
+			set = function(_, val) RE.Settings.FullDungeonName = val end,
+			get = function(_) return RE.Settings.FullDungeonName end
+		},
 		viplist = {
 			name = L["Pinned characters"],
 			type = "multiselect",
+			order = 2,
 			get = function(_, player) if RE.Settings.VIPList[player] then return true else return false end end,
 			set = function(_, player, state) if not state then RE.Settings.VIPList[player] = nil else RE.Settings.VIPList[player] = true end end,
 		}
@@ -465,6 +475,7 @@ end
 -- Support functions
 
 function RE:GetShortMapName(mapName)
+	if RE.Settings.FullDungeonName then return mapName end
 	local mapNameTemp = {strsplit(" ", mapName)}
 	local mapShortName = ""
 	for i=1, #mapNameTemp do
