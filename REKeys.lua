@@ -38,7 +38,6 @@ local IsQuestBounty = _G.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
-local IsAddOnLoaded = _G.IsAddOnLoaded
 local IsShiftKeyDown = _G.IsShiftKeyDown
 local Timer = _G.C_Timer
 local SecondsToTime = _G.SecondsToTime
@@ -50,7 +49,6 @@ RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
 RE.Fill = true
-RE.RaiderIO = false
 RE.ThrottleTable = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
@@ -216,7 +214,7 @@ function RE:OnEvent(self, event, name, ...)
 		end
 
 		if ElvUI then
-			_G.ElvUI[1]:GetModule("Chat"):AddPluginIcons(ElvUISwag)
+			ElvUI[1]:GetModule("Chat"):AddPluginIcons(ElvUISwag)
 		end
 
 		RegisterAddonMessagePrefix("REKeys")
@@ -411,7 +409,7 @@ function RE:FillTooltip()
 		for i = 1, #RE.DBVIPSort do
 			local name = RE.DBVIPSort[i]
 			local data = RE.DB[name]
-			if RE.RaiderIO and IsShiftKeyDown() then
+			if RaiderIO and IsShiftKeyDown() then
 				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			else
 				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
@@ -425,7 +423,7 @@ function RE:FillTooltip()
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		if RE.RaiderIO and IsShiftKeyDown() then
+		if RaiderIO and IsShiftKeyDown() then
 			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		else
 			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
@@ -435,7 +433,7 @@ function RE:FillTooltip()
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				if RE.RaiderIO and IsShiftKeyDown() then
+				if RaiderIO and IsShiftKeyDown() then
 					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d-|r")
 				else
 					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
@@ -569,8 +567,7 @@ function RE:KeySearchDelay()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
-	if IsAddOnLoaded("RaiderIO") then
-		RE.RaiderIO = true
+	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
 	end
 end
