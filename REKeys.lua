@@ -44,7 +44,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 4
+RE.DataVersion = 5
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -135,6 +135,7 @@ function RE:OnEvent(self, event, name, ...)
 			if data[1] ~= RE.DataVersion then
 				wipe(RE.DB)
 				RE.Settings.MyKeys = {}
+				RE.BestRun = 0
 				RE.Settings.CurrentWeek = 0
 				break
 			end
@@ -186,16 +187,7 @@ function RE:OnEvent(self, event, name, ...)
 		end
 		function RE.LDB:OnClick(button)
 			if button == "MiddleButton" then
-				local keyLink
-				for bag = 0, NUM_BAG_SLOTS do
-					local bagSlots = GetContainerNumSlots(bag)
-					for slot = 1, bagSlots do
-						if GetContainerItemID(bag, slot) == 138019 then
-							keyLink = GetContainerItemLink(bag, slot)
-							break
-						end
-					end
-				end
+				local keyLink = RE:GetKeystoneLink()
 				if keyLink then
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
 				end
@@ -304,14 +296,14 @@ function RE:FindKey(dungeonCompleted)
 		elseif RE.Settings.MyKeys[RE.MyFullName].DungeonID == keystone and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel == keystoneLevel and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
 			return
 		end
+		local keyLink = RE:GetKeystoneLink()
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
-		local dungeonStr = RE:GetShortMapName(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel
-		if dungeonCompleted and IsInGroup() then
-			SendChatMessage("[REKeys] "..L["My new key"]..": "..dungeonStr, "PARTY")
+		if IsInGroup() and keyLink then
+			SendChatMessage("[REKeys] "..L["My new key"]..": "..keyLink, "PARTY")
 		end
-		RE.LDB.text = "|cffe6cc80"..dungeonStr.."|r"
+		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
 
 		if RE.Settings.CurrentWeek == 0 then
 			local currentAffixes = GetCurrentAffixes()
@@ -471,6 +463,20 @@ function RE:FillChat()
 end
 
 -- Support functions
+
+function RE:GetKeystoneLink()
+	local keyLink
+	for bag = 0, NUM_BAG_SLOTS do
+		local bagSlots = GetContainerNumSlots(bag)
+		for slot = 1, bagSlots do
+			if GetContainerItemID(bag, slot) == 158923 then
+				keyLink = GetContainerItemLink(bag, slot)
+				break
+			end
+		end
+	end
+	return keyLink
+end
 
 function RE:GetShortMapName(mapName)
 	if RE.Settings.FullDungeonName then return mapName end
