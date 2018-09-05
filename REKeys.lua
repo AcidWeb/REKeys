@@ -554,13 +554,13 @@ function RE:GetBestRunString(bestRun)
 end
 
 function RE:GetRaiderIOScore(name)
-	local data = RaiderIO.GetScore(name, nil, RE.Factions[RE.MyFaction])
+	local data = RaiderIO.GetPlayerProfile(RaiderIO.ProfileOutput.MYTHICPLUS, name, nil, RE.Factions[RE.MyFaction])
 	if data then
-		local r, g, b = RaiderIO.GetScoreColor(data.allScore)
-		local output = "|cff"..sformat("%02x%02x%02x", r*255, g*255, b*255)..data.allScore.."|r "
-		if data.isTank then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:0:19:22:41|t" end
-		if data.isHealer then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:1:20|t" end
-		if data.isDPS then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:22:41|t" end
+		local r, g, b = RaiderIO.GetScoreColor(data.profile.allScore)
+		local output = "|cff"..sformat("%02x%02x%02x", r*255, g*255, b*255)..data.profile.allScore.."|r "
+		if data.profile.isTank then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:0:19:22:41|t" end
+		if data.profile.isHealer then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:1:20|t" end
+		if data.profile.isDPS then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:22:41|t" end
 		return output
 	else
 		return "-"
