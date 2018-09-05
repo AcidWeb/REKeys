@@ -300,7 +300,7 @@ function RE:FindKey(dungeonCompleted)
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
-		if IsInGroup() and keyLink then
+		if dungeonCompleted and keyLink and IsInGroup() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..keyLink, "PARTY")
 		end
 		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
