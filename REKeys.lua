@@ -92,6 +92,17 @@ RE.AffixSchedule = {
 	{ 10, 5, 13 },
 	{ 9, 7, 12 },
 }
+RE.DungeonNames = {
+	[247] = "TM",
+	[244] = "AD",
+	[245] = "FH",
+	[246] = "TD",
+	[353] = "SIEGE",
+	[251] = "UNDR",
+	[248] = "WM",
+	[252] = "SOTS",
+	[249] = "KR",
+	[250] = "TOS"
 }
 RE.Factions = {
 	["Alliance"] = 1,
@@ -188,7 +199,7 @@ function RE:OnEvent(self, event, name, ...)
 		function RE.LDB:OnClick(button)
 			if button == "MiddleButton" then
 				local keyLink = RE:GetKeystoneLink()
-				if keyLink then
+				if keyLink ~= "" then
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
 				end
 			elseif button == "RightButton" then
@@ -296,14 +307,13 @@ function RE:FindKey(dungeonCompleted)
 		elseif RE.Settings.MyKeys[RE.MyFullName].DungeonID == keystone and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel == keystoneLevel and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
 			return
 		end
-		local keyLink = RE:GetKeystoneLink()
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.ID, RE.BestRun}
-		if dungeonCompleted and keyLink and IsInGroup() then
-			SendChatMessage("[REKeys] "..L["My new key"]..": "..keyLink, "PARTY")
+		if dungeonCompleted and IsInGroup() then
+			SendChatMessage("[REKeys] "..L["My new key"]..": "..RE:GetKeystoneLink(), "PARTY")
 		end
-		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(RE.Settings.MyKeys[RE.MyFullName].DungeonID)).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
+		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
 
 		if RE.Settings.CurrentWeek == 0 then
 			local currentAffixes = GetCurrentAffixes()
@@ -386,11 +396,11 @@ function RE:FillTooltip()
 	RE.Tooltip:Clear()
 	RE.Tooltip:SetColumnLayout(5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 	RE.Tooltip:AddLine()
-	RE.Tooltip:SetCell(1, 1, "", nil, nil, nil, nil, nil, nil, nil, 70)
+	RE.Tooltip:SetCell(1, 1, "", nil, nil, nil, nil, nil, nil, nil, 80)
 	RE.Tooltip:SetCell(1, 2, "", nil, nil, nil, nil, nil, nil, 5, 5)
-	RE.Tooltip:SetCell(1, 3, "", nil, nil, nil, nil, nil, nil, nil, 70)
+	RE.Tooltip:SetCell(1, 3, "", nil, nil, nil, nil, nil, nil, nil, 80)
 	RE.Tooltip:SetCell(1, 4, "", nil, nil, nil, nil, nil, nil, 5, 5)
-	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 70)
+	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 80)
 	RE:GetPrefixes()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:AddSeparator()
@@ -404,7 +414,7 @@ function RE:FillTooltip()
 			if RaiderIO and IsShiftKeyDown() then
 				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			else
-				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			end
 			RE:GetFill(row)
 		end
@@ -418,7 +428,7 @@ function RE:FillTooltip()
 		if RaiderIO and IsShiftKeyDown() then
 			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		else
-			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
 		RE:GetFill(row)
 		if #RE.DBAltSort[data[6]] > 0 then
@@ -428,7 +438,7 @@ function RE:FillTooltip()
 				if RaiderIO and IsShiftKeyDown() then
 					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d-|r")
 				else
-					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
+					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]), nil, "|cff9d9d9d-|r")
 				end
 				RE:GetFill(row)
 			end
@@ -444,19 +454,19 @@ function RE:FillChat()
 		for i = 1, #RE.DBVIPSort do
 			local name = RE.DBVIPSort[i]
 			local data = RE.DB[name]
-			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
 		print("-----")
 	end
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
-		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
 				local name = RE.DBAltSort[data[6]][z]
 				local data = RE.DB[name]
-				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(GetMapUIInfo(data[4])).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
+				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
 			end
 		end
 	end
@@ -465,7 +475,7 @@ end
 -- Support functions
 
 function RE:GetKeystoneLink()
-	local keyLink
+	local keyLink = ""
 	for bag = 0, NUM_BAG_SLOTS do
 		local bagSlots = GetContainerNumSlots(bag)
 		for slot = 1, bagSlots do
@@ -478,14 +488,12 @@ function RE:GetKeystoneLink()
 	return keyLink
 end
 
-function RE:GetShortMapName(mapName)
-	if RE.Settings.FullDungeonName then return mapName end
-	local mapNameTemp = {strsplit(" ", mapName)}
-	local mapShortName = ""
-	for i=1, #mapNameTemp do
-		mapShortName = mapShortName..RE:StrSub(mapNameTemp[i], 0, 1)
+function RE:GetShortMapName(mapID)
+	if RE.Settings.FullDungeonName then
+		return GetMapUIInfo(mapID)
+	else
+		return RE.DungeonNames[mapID]
 	end
-	return mapShortName
 end
 
 function RE:GetShortTime(dbTime)
@@ -576,34 +584,4 @@ function RE:KeySearchDelay()
 	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
 	end
-end
-
-function RE:CSize(char)
-	if not char then
-		return 0
-	elseif char > 240 then
-		return 4
-	elseif char > 225 then
-		return 3
-	elseif char > 192 then
-		return 2
-	else
-		return 1
-	end
-end
-
-function RE:StrSub(str, startChar, numChars)
-	local startIndex = 1
-	while startChar > 1 do
-		local char = sbyte(str, startIndex)
-		startIndex = startIndex + RE:CSize(char)
-		startChar = startChar - 1
-	end
-	local currentIndex = startIndex
-	while numChars > 0 and currentIndex <= #str do
-		local char = sbyte(str, currentIndex)
-		currentIndex = currentIndex + RE:CSize(char)
-		numChars = numChars -1
-	end
-	return str:sub(startIndex, currentIndex - 1)
 end
