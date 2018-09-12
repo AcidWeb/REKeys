@@ -7,7 +7,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 _G.REKeys = RE
 
 --GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, LE_PARTY_CATEGORY_HOME, LE_PARTY_CATEGORY_INSTANCE, Game15Font, Game18Font, GameTooltipHeaderText
-local strsplit, pairs, ipairs, select, sbyte, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.byte, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
+local strsplit, pairs, ipairs, select, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
 local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local RegisterAddonMessagePrefix = _G.C_ChatInfo.RegisterAddonMessagePrefix
@@ -18,16 +18,16 @@ local GetNumFriends = _G.GetNumFriends
 local GetFriendInfo = _G.GetFriendInfo
 local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
-local GetMapTable = _G.C_ChallengeMode.GetMapTable
+local GetWeeklyChestRewardLevel = _G.C_MythicPlus.GetWeeklyChestRewardLevel
 local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
 local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
 local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
-local GetWeeklyBestForMap = _G.C_MythicPlus.GetWeeklyBestForMap
 local GetContainerNumSlots = _G.GetContainerNumSlots
 local GetContainerItemID = _G.GetContainerItemID
 local GetContainerItemLink = _G.GetContainerItemLink
 local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
+local RequestRewards = _G.C_MythicPlus.RequestRewards
 local BNGetNumFriends = _G.BNGetNumFriends
 local BNGetFriendInfo = _G.BNGetFriendInfo
 local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
@@ -110,10 +110,10 @@ RE.Factions = {
 }
 
 local function ElvUISwag(sender)
-  if sender == "Livarax-BurningLegion" then
-    return [[|TInterface\PvPRankBadges\PvPRank09:0|t ]]
-  end
-  return nil
+	if sender == "Livarax-BurningLegion" then
+		return [[|TInterface\PvPRankBadges\PvPRank09:0|t ]]
+	end
+	return nil
 end
 
 -- Event functions
@@ -229,11 +229,13 @@ function RE:OnEvent(self, event, name, ...)
 		RE.MyClass = select(2, UnitClass("player"))
 		RequestMapInfo()
 		RequestCurrentAffixes()
+		RequestRewards()
 		Timer.After(5, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
 		RequestCurrentAffixes()
+		RequestRewards()
 		Timer.After(1.5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, channel, sender = ...
@@ -283,7 +285,7 @@ function RE:FindKey(dungeonCompleted)
 	local keystone = GetOwnedKeystoneChallengeMapID()
 
 	if dungeonCompleted then
-		RE.BestRun = RE:GetBestRun()
+		RE.BestRun = GetWeeklyChestRewardLevel()
 		if RE.Settings.MyKeys[RE.MyFullName] then
 			RE.Settings.MyKeys[RE.MyFullName]["BestRun"] = RE.BestRun
 			RE.DB[RE.MyFullName][7] = RE.BestRun
@@ -542,17 +544,6 @@ function RE:GetFill(row)
 	end
 end
 
-function RE:GetBestRun()
-	local maps = GetMapTable()
-	local best = 0
-	for i = 1, #maps do
-		local level = select(2, GetWeeklyBestForMap(maps[i]))
-		if not level then level = 0 end
-		if level > best then best = level end
-	end
-	return best
-end
-
 function RE:GetBestRunString(bestRun)
 	if bestRun > 1 then
 		return " [+"..bestRun.."]"
@@ -576,7 +567,7 @@ function RE:GetRaiderIOScore(name)
 end
 
 function RE:KeySearchDelay()
-	RE.BestRun = RE:GetBestRun()
+	RE.BestRun = GetWeeklyChestRewardLevel()
 	RE:FindKey()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
