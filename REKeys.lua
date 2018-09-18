@@ -34,6 +34,7 @@ local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
 local UnitFullName = _G.UnitFullName
 local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
+local UnitExists = _G.UnitExists
 local IsQuestBounty = _G.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
@@ -50,6 +51,7 @@ RE.BestRun = 0
 RE.Outdated = false
 RE.Fill = true
 RE.ThrottleTable = {}
+RE.PartyState = {}
 RE.DBNameSort = {}
 RE.DBAltSort = {}
 RE.DBVIPSort = {}
@@ -370,8 +372,18 @@ function RE:FillSorting()
 	wipe(RE.DBNameSort)
 	wipe(RE.DBAltSort)
 	wipe(RE.DBVIPSort)
+	wipe(RE.PartyState)
+	if IsInGroup() and not IsInRaid() then
+		for i=1,4 do
+			if UnitExists("party"..i) then
+				local name, realm = UnitFullName("party"..i)
+				if not realm or (realm and realm == "") then realm = RE.MyRealm end
+				RE.PartyState[name.."-"..realm] = true
+			end
+		end
+	end
 	for name, data in pairs(RE.DB) do
-		if RE.Settings.VIPList[name] then
+		if RE.Settings.VIPList[name] or RE.PartyState[name] then
 			tinsert(RE.DBVIPSort, name)
 		else
 			local id = data[6]
