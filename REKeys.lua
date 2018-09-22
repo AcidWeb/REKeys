@@ -322,7 +322,7 @@ function RE:FindKey(dungeonCompleted)
 		if RE.Settings.CurrentWeek == 0 then
 			local currentAffixes = GetCurrentAffixes()
 			for i, affixes in ipairs(RE.AffixSchedule) do
-				if currentAffixes[3] == affixes[1] and currentAffixes[1] == affixes[2] and currentAffixes[2] == affixes[3] then
+				if currentAffixes[1] == affixes[1] and currentAffixes[2] == affixes[2] and currentAffixes[3] == affixes[3] then
 					RE.Settings.CurrentWeek = i
 					break
 				end
@@ -537,7 +537,7 @@ function RE:GetPrefixes()
 	if currentAffixes[4] then
 		RE.Tooltip:AddHeader("", "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4]).."|r", "|cffff0000>|r", "")
 	end
-	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[3]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[1]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2]).."|r")
+	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3]).."|r")
 	RE.Tooltip:AddLine()
 	if RE.Settings.CurrentWeek > 0 then
 		local affixes = RE.AffixSchedule[RE.Settings.CurrentWeek % #RE.AffixSchedule + 1]
