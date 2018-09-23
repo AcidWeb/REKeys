@@ -18,10 +18,13 @@ local GetNumFriends = _G.GetNumFriends
 local GetFriendInfo = _G.GetFriendInfo
 local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
+local GetGuildLeaders = _G.C_ChallengeMode.GetGuildLeaders
+local RequestLeaders = _G.C_ChallengeMode.RequestLeaders
 local GetWeeklyChestRewardLevel = _G.C_MythicPlus.GetWeeklyChestRewardLevel
 local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
 local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
 local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
+local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeystoneLevel
 local GetContainerNumSlots = _G.GetContainerNumSlots
 local GetContainerItemID = _G.GetContainerItemID
 local GetContainerItemLink = _G.GetContainerItemLink
@@ -105,6 +108,18 @@ RE.DungeonNames = {
 	[252] = "SOTS",
 	[249] = "KR",
 	[250] = "TOS"
+}
+RE.RewardColors = {
+	[1] = "FFFF0000",
+	[2] = "FFE31C00",
+	[3] = "FFC63900",
+	[4] = "FFAA5500",
+	[5] = "FF8E7100",
+	[6] = "FF718E00",
+	[7] = "FF55AA00",
+	[8] = "FF39C600",
+	[9] = "FF1CE300",
+	[10] = "FF00FF00"
 }
 RE.Factions = {
 	["Alliance"] = 1,
@@ -232,13 +247,19 @@ function RE:OnEvent(self, event, name, ...)
 		RequestMapInfo()
 		RequestCurrentAffixes()
 		RequestRewards()
+		for k, _ in pairs(RE.DungeonNames) do
+			RequestLeaders(k)
+		end
 		Timer.After(5, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
 		RequestCurrentAffixes()
 		RequestRewards()
-		Timer.After(1.5, function() RE:FindKey(true) end)
+		for k, _ in pairs(RE.DungeonNames) do
+			RequestLeaders(k)
+		end
+		Timer.After(3, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_ADDON" and name == "REKeys" then
 		local msg, channel, sender = ...
 		msg = {strsplit(";", msg)}
@@ -535,7 +556,17 @@ end
 function RE:GetPrefixes()
 	local currentAffixes = GetCurrentAffixes()
 	if currentAffixes[4] then
-		RE.Tooltip:AddHeader("", "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4]).."|r", "|cffff0000>|r", "")
+		local leftPanel = "[|cffff0000-|r]"
+		local rightPanel = "[|cffff0000-|r]"
+		local topRuns = GetGuildLeaders()
+		if RE.BestRun > 0 then
+			leftPanel = "[|c"..RE:GetKeystoneLevelColor(RE.BestRun).."+"..RE.BestRun.."|r] [|c"..RE:GetKeystoneLevelColor(RE.BestRun)..GetRewardLevelFromKeystoneLevel(RE.BestRun).."+|r]"
+		end
+		if topRuns and topRuns[1] then
+			rightPanel = "[|c"..RE:GetKeystoneLevelColor(topRuns[1].keystoneLevel)..RE.DungeonNames[topRuns[1].mapChallengeModeID].." +"..topRuns[1].keystoneLevel.."|r]"
+		end
+		RE.Tooltip:AddHeader(leftPanel, "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4]).."|r", "|cffff0000>|r", rightPanel)
+		RE.Tooltip:AddLine()
 	end
 	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3]).."|r")
 	RE.Tooltip:AddLine()
@@ -561,6 +592,14 @@ function RE:GetBestRunString(bestRun)
 		return " [+"..bestRun.."]"
 	else
 		return ""
+	end
+end
+
+function RE:GetKeystoneLevelColor(level)
+	if level > 10 then
+		return RE.RewardColors[10]
+	else
+		return RE.RewardColors[level]
 	end
 end
 
