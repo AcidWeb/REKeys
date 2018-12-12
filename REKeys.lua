@@ -38,6 +38,7 @@ local UnitFullName = _G.UnitFullName
 local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
 local UnitExists = _G.UnitExists
+local IsPlayerAtEffectiveMaxLevel = _G.IsPlayerAtEffectiveMaxLevel
 local IsQuestBounty = _G.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
@@ -48,7 +49,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 5
+RE.DataVersion = 6
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -61,7 +62,7 @@ RE.DBVIPSort = {}
 SLASH_REKEYS1 = "/rekeys"
 SLASH_REKEYS2 = "/rk"
 
-RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["VIPList"] = {}, ["FullDungeonName"] = false}
+RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["VIPList"] = {}, ["FullDungeonName"] = false, ["AffixHash"] = 0}
 RE.AceConfig = {
 	type = "group",
 	args = {
@@ -315,13 +316,25 @@ function RE:FindKey(dungeonCompleted)
 		end
 	end
 
-	if not keystone then
-		if RE.Settings.MyKeys[RE.MyFullName] ~= nil then
-			wipe(RE.DB)
-			RE.Settings.MyKeys = {}
-			RE.BestRun = 0
-			RE.Settings.CurrentWeek = 0
+	local affixHash = RE:GetAffixHash()
+	if affixHash and RE.Settings.AffixHash ~= affixHash then
+		RE.Settings.AffixHash = affixHash
+		RE.Settings.MyKeys = {}
+		RE.BestRun = 0
+		RE.Settings.CurrentWeek = 0
+		wipe(RE.DB)
+	end
+	if RE.Settings.CurrentWeek == 0 then
+		local currentAffixes = GetCurrentAffixes()
+		for i, affixes in ipairs(RE.AffixSchedule) do
+			if currentAffixes[1].id == affixes[1] and currentAffixes[2].id == affixes[2] and currentAffixes[3].id == affixes[3] then
+				RE.Settings.CurrentWeek = i
+				break
+			end
 		end
+	end
+
+	if not keystone then
 		RE.Settings.MyKeys[RE.MyFullName] = nil
 		RE.DB[RE.MyFullName] = nil
 		RE.LDB.text = "|cffe6cc80-|r"
@@ -339,16 +352,6 @@ function RE:FindKey(dungeonCompleted)
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..RE:GetKeystoneLink(), "PARTY")
 		end
 		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
-
-		if RE.Settings.CurrentWeek == 0 then
-			local currentAffixes = GetCurrentAffixes()
-			for i, affixes in ipairs(RE.AffixSchedule) do
-				if currentAffixes[1] == affixes[1] and currentAffixes[2] == affixes[2] and currentAffixes[3] == affixes[3] then
-					RE.Settings.CurrentWeek = i
-					break
-				end
-			end
-		end
 
 		if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then RE:FillTooltip() end
 	end
@@ -553,6 +556,20 @@ function RE:GetVIPList()
 	return viplist
 end
 
+function RE:GetAffixHash()
+	local currentAffixes = GetCurrentAffixes()
+	if IsPlayerAtEffectiveMaxLevel() and currentAffixes and #currentAffixes == 4 then
+		local affixHash = (currentAffixes[1].id * 1000) + (currentAffixes[2].id * 100) + (currentAffixes[3].id * 10) + currentAffixes[4].id
+		if affixHash > 0 then
+			return affixHash
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
+
 function RE:GetPrefixes()
 	local currentAffixes = GetCurrentAffixes()
 	if currentAffixes[4] then
@@ -565,10 +582,10 @@ function RE:GetPrefixes()
 		if topRuns and topRuns[1] then
 			rightPanel = "[|c"..RE:GetKeystoneLevelColor(topRuns[1].keystoneLevel)..RE.DungeonNames[topRuns[1].mapChallengeModeID].." +"..topRuns[1].keystoneLevel.."|r]"
 		end
-		RE.Tooltip:AddHeader(leftPanel, "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4]).."|r", "|cffff0000>|r", rightPanel)
+		RE.Tooltip:AddHeader(leftPanel, "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4].id).."|r", "|cffff0000>|r", rightPanel)
 		RE.Tooltip:AddLine()
 	end
-	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2]).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3]).."|r")
+	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
 	RE.Tooltip:AddLine()
 	if RE.Settings.CurrentWeek > 0 then
 		local affixes = RE.AffixSchedule[RE.Settings.CurrentWeek % #RE.AffixSchedule + 1]
