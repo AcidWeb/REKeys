@@ -38,7 +38,6 @@ local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
 local UnitExists = _G.UnitExists
 local IsPlayerAtEffectiveMaxLevel = _G.IsPlayerAtEffectiveMaxLevel
-local IsQuestBounty = _G.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
@@ -140,7 +139,7 @@ function RE:OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 end
 
-function RE:OnEvent(self, event, name, ...)
+function RE:OnEvent(self, event, name)
 	if event == "ADDON_LOADED" and name == "REKeys" then
 		if not _G.REKeysDB then _G.REKeysDB = {} end
 		if not _G.REKeysSettings then _G.REKeysSettings = RE.DefaultSettings end
@@ -249,7 +248,7 @@ function RE:OnEvent(self, event, name, ...)
 		for k, _ in pairs(RE.DungeonNames) do
 			RequestLeaders(k)
 		end
-		Timer.After(5, RE.KeySearchDelay)
+		Timer.After(10, RE.KeySearchDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
@@ -258,14 +257,9 @@ function RE:OnEvent(self, event, name, ...)
 		for k, _ in pairs(RE.DungeonNames) do
 			RequestLeaders(k)
 		end
-		Timer.After(3, function() RE:FindKey(true) end)
+		Timer.After(5, function() RE:FindKey(true) end)
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
 		RE.FillTooltip()
-	elseif event == "QUEST_ACCEPTED" then
-		local questID = ...
-		if IsQuestBounty(questID) then
-			RE:FindKey()
-		end
 	end
 end
 
@@ -325,10 +319,12 @@ function RE:FindKey(dungeonCompleted)
 	end
 	if RE.Settings.CurrentWeek == 0 then
 		local currentAffixes = GetCurrentAffixes()
-		for i, affixes in ipairs(RE.AffixSchedule) do
-			if currentAffixes[1].id == affixes[1] and currentAffixes[2].id == affixes[2] and currentAffixes[3].id == affixes[3] then
-				RE.Settings.CurrentWeek = i
-				break
+		if currentAffixes then
+			for i, affixes in ipairs(RE.AffixSchedule) do
+				if currentAffixes[1].id == affixes[1] and currentAffixes[2].id == affixes[2] and currentAffixes[3].id == affixes[3] then
+					RE.Settings.CurrentWeek = i
+					break
+				end
 			end
 		end
 	end
@@ -571,21 +567,23 @@ end
 
 function RE:GetPrefixes()
 	local currentAffixes = GetCurrentAffixes()
-	if currentAffixes[4] then
-		local leftPanel = "[|cffff0000-|r]"
-		local rightPanel = "[|cffff0000-|r]"
-		local topRuns = GetGuildLeaders()
-		if RE.BestRun > 0 then
-			leftPanel = "[|c"..RE:GetKeystoneLevelColor(RE.BestRun).."+"..RE.BestRun.."|r] [|c"..RE:GetKeystoneLevelColor(RE.BestRun)..GetRewardLevelFromKeystoneLevel(RE.BestRun).."+|r]"
+	if currentAffixes then
+		if #currentAffixes == 4 then
+			local leftPanel = "[|cffff0000-|r]"
+			local rightPanel = "[|cffff0000-|r]"
+			local topRuns = GetGuildLeaders()
+			if RE.BestRun > 0 then
+				leftPanel = "[|c"..RE:GetKeystoneLevelColor(RE.BestRun).."+"..RE.BestRun.."|r] [|c"..RE:GetKeystoneLevelColor(RE.BestRun)..GetRewardLevelFromKeystoneLevel(RE.BestRun).."+|r]"
+			end
+			if topRuns and topRuns[1] then
+				rightPanel = "[|c"..RE:GetKeystoneLevelColor(topRuns[1].keystoneLevel)..RE.DungeonNames[topRuns[1].mapChallengeModeID].." +"..topRuns[1].keystoneLevel.."|r]"
+			end
+			RE.Tooltip:AddHeader(leftPanel, "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4].id).."|r", "|cffff0000>|r", rightPanel)
+			RE.Tooltip:AddLine()
 		end
-		if topRuns and topRuns[1] then
-			rightPanel = "[|c"..RE:GetKeystoneLevelColor(topRuns[1].keystoneLevel)..RE.DungeonNames[topRuns[1].mapChallengeModeID].." +"..topRuns[1].keystoneLevel.."|r]"
-		end
-		RE.Tooltip:AddHeader(leftPanel, "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4].id).."|r", "|cffff0000>|r", rightPanel)
+		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
 		RE.Tooltip:AddLine()
 	end
-	RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
-	RE.Tooltip:AddLine()
 	if RE.Settings.CurrentWeek > 0 then
 		local affixes = RE.AffixSchedule[RE.Settings.CurrentWeek % #RE.AffixSchedule + 1]
 		RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[1]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[3]).."|r")
@@ -637,7 +635,6 @@ function RE:KeySearchDelay()
 	RE.BestRun = GetWeeklyChestRewardLevel()
 	RE:FindKey()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
