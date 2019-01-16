@@ -334,6 +334,7 @@ function RE:FindKey(dungeonCompleted)
 		RE.DB[RE.MyFullName] = nil
 		RE.LDB.text = "|cffe6cc80-|r"
 	else
+		RE.BestRun = GetWeeklyChestRewardLevel()
 		local keystoneLevel = GetOwnedKeystoneLevel()
 		if not RE.Settings.MyKeys[RE.MyFullName] then
 			RE.Settings.MyKeys[RE.MyFullName] = {}
@@ -632,7 +633,6 @@ function RE:GetRaiderIOScore(name)
 end
 
 function RE:KeySearchDelay()
-	RE.BestRun = GetWeeklyChestRewardLevel()
 	RE:FindKey()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
