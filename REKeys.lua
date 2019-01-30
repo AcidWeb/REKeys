@@ -38,6 +38,7 @@ local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
 local UnitExists = _G.UnitExists
 local IsPlayerAtEffectiveMaxLevel = _G.IsPlayerAtEffectiveMaxLevel
+local IsQuestBounty = _G.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
@@ -47,11 +48,12 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 6
+RE.DataVersion = 7
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
 RE.Fill = true
+RE.MPlusDataReceived = false
 RE.ThrottleTable = {}
 RE.PartyState = {}
 RE.DBNameSort = {}
@@ -139,7 +141,7 @@ function RE:OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 end
 
-function RE:OnEvent(self, event, name)
+function RE:OnEvent(self, event, name, ...)
 	if event == "ADDON_LOADED" and name == "REKeys" then
 		if not _G.REKeysDB then _G.REKeysDB = {} end
 		if not _G.REKeysSettings then _G.REKeysSettings = RE.DefaultSettings end
@@ -177,7 +179,7 @@ function RE:OnEvent(self, event, name)
 			icon = "Interface\\Icons\\INV_Relics_Hourglass",
 		})
 		function RE.LDB:OnEnter()
-			if RE.LDB.text == "|cFF74D06CRE|rKeys" then return end
+			if RE.LDB.text == "|cFF74D06CRE|rKeys" or not RE.MPlusDataReceived then return end
 			if RE.Outdated then
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
 				if ElvUI then
@@ -242,6 +244,7 @@ function RE:OnEvent(self, event, name)
 		RE.MyFullName = RE.MyName.."-"..RE.MyRealm
 		RE.MyFaction = UnitFactionGroup("player")
 		RE.MyClass = select(2, UnitClass("player"))
+		self:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
 		RequestMapInfo()
 		RequestCurrentAffixes()
 		RequestRewards()
@@ -260,6 +263,14 @@ function RE:OnEvent(self, event, name)
 		Timer.After(5, function() RE:FindKey(true) end)
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
 		RE.FillTooltip()
+	elseif event == "QUEST_ACCEPTED" then
+		local questID = ...
+		if IsQuestBounty(questID) then
+			RE.MPlusDataReceived = false
+			RE:FindKey()
+		end
+	elseif event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE" then
+		RE.MPlusDataReceived = true
 	end
 end
 
@@ -301,6 +312,12 @@ end
 function RE:FindKey(dungeonCompleted)
 	local keystone = GetOwnedKeystoneChallengeMapID()
 
+	if not RE.MPlusDataReceived then
+		RequestCurrentAffixes()
+		Timer.After(3, RE.FindKey)
+		return
+	end
+
 	if dungeonCompleted then
 		RE.BestRun = GetWeeklyChestRewardLevel()
 		if RE.Settings.MyKeys[RE.MyFullName] then
@@ -337,6 +354,7 @@ function RE:FindKey(dungeonCompleted)
 		RE.BestRun = GetWeeklyChestRewardLevel()
 		local keystoneLevel = GetOwnedKeystoneLevel()
 		if not RE.Settings.MyKeys[RE.MyFullName] then
+			RE.BestRun = 0
 			RE.Settings.MyKeys[RE.MyFullName] = {}
 		elseif RE.Settings.MyKeys[RE.MyFullName].DungeonID == keystone and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel == keystoneLevel and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
 			return
@@ -633,8 +651,12 @@ function RE:GetRaiderIOScore(name)
 end
 
 function RE:KeySearchDelay()
+	if not RE.MPlusDataReceived then
+		RequestCurrentAffixes()
+	end
 	RE:FindKey()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
