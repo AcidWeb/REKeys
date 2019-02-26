@@ -1,7 +1,7 @@
 ## Interface: 80100
 ## Title: |cFF74D06CRE|rKeys
 ## Notes: Collect information about keystones owned by your friends.
-## Version: 1.5.4
+## Version: 1.5.5
 ## Author: AcidWeb
 ## SavedVariables: REKeysDB, REKeysSettings
 ## X-Website: https://www.curseforge.com/wow/addons/rekeys-keystone-manager
