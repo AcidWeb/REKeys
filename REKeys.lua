@@ -13,8 +13,8 @@ local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local SendChatMessage = _G.SendChatMessage
 local GetServerTime = _G.GetServerTime
-local GetNumFriends = _G.GetNumFriends
-local GetFriendInfo = _G.GetFriendInfo
+local GetNumFriends = _G.C_FriendList.GetNumFriends
+local GetFriendInfoByIndex = _G.C_FriendList.GetFriendInfoByIndex
 local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local GetGuildLeaders = _G.C_ChallengeMode.GetGuildLeaders
@@ -99,7 +99,7 @@ RE.AffixSchedule = {
 	{ 9, 7, 12 },
 }
 RE.DungeonNames = {
-	[247] = "TM",
+	[247] = "ML",
 	[244] = "AD",
 	[245] = "FH",
 	[246] = "TD",
@@ -385,7 +385,7 @@ function RE:RequestKeys()
 	end
 
 	for i = 1, GetNumFriends() do
-		local name, _, _, _, connected = GetFriendInfo(i)
+		local connected, name = GetFriendInfoByIndex(i)
 		if name and connected then
 			if not strfind(name, "-") then
 				name = name.."-"..RE.MyRealm
@@ -502,14 +502,6 @@ end
 
 function RE:FillChat()
 	RE:FillSorting()
-	if #RE.DBVIPSort > 0 then
-		for i = 1, #RE.DBVIPSort do
-			local name = RE.DBVIPSort[i]
-			local data = RE.DB[name]
-			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-		end
-		print("-----")
-	end
 	for i = 1, #RE.DBNameSort do
 		local name = RE.DBNameSort[i]
 		local data = RE.DB[name]
@@ -520,6 +512,14 @@ function RE:FillChat()
 				local data = RE.DB[name]
 				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
 			end
+		end
+	end
+	if #RE.DBVIPSort > 0 then
+		print("-----")
+		for i = 1, #RE.DBVIPSort do
+			local name = RE.DBVIPSort[i]
+			local data = RE.DB[name]
+			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		end
 	end
 end
