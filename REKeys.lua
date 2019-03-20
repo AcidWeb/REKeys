@@ -7,7 +7,6 @@ local COMM = LibStub("AceComm-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 _G.REKeys = RE
 
---GLOBALS: SLASH_REKEYS1, SLASH_REKEYS2, NUM_BAG_SLOTS, RAID_CLASS_COLORS, LE_PARTY_CATEGORY_HOME, LE_PARTY_CATEGORY_INSTANCE, Game15Font, Game18Font, GameTooltipHeaderText
 local strsplit, pairs, ipairs, select, sformat, strfind, time, date, tonumber, fastrandom, wipe, sort, tinsert, next, print, unpack = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.fastrandom, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack
 local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
@@ -397,9 +396,9 @@ function RE:RequestKeys()
 	for i = 1, BNGetNumFriends() do
 		local _, _, _, _, toonName, toonID = BNGetFriendInfo(i)
 		if toonName then
-			local _, toonName, _, realmName, _, faction = BNGetGameAccountInfo(toonID)
+			local _, name, _, realmName, _, faction = BNGetGameAccountInfo(toonID)
 			if faction == RE.MyFaction and realmName == RE.MyRealm then
-				COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", toonName.."-"..RE.MyRealm)
+				COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", name.."-"..RE.MyRealm)
 			end
 		end
 	end
@@ -444,7 +443,7 @@ function RE:FillSorting()
 end
 
 function RE:FillTooltip()
-	local row = 0
+	local row
 	RE.Tooltip:Clear()
 	RE.Tooltip:SetColumnLayout(5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 	RE.Tooltip:AddLine()
@@ -485,8 +484,8 @@ function RE:FillTooltip()
 		RE:GetFill(row)
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
-				local name = RE.DBAltSort[data[6]][z]
-				local data = RE.DB[name]
+				name = RE.DBAltSort[data[6]][z]
+				data = RE.DB[name]
 				if RaiderIO and IsShiftKeyDown() then
 					row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d-|r")
 				else
@@ -508,8 +507,8 @@ function RE:FillChat()
 		print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 		if #RE.DBAltSort[data[6]] > 0 then
 			for z = 1, #RE.DBAltSort[data[6]] do
-				local name = RE.DBAltSort[data[6]][z]
-				local data = RE.DB[name]
+				name = RE.DBAltSort[data[6]][z]
+				data = RE.DB[name]
 				print("> |c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[7]))
 			end
 		end
