@@ -75,6 +75,14 @@ RE.AceConfig = {
 			get = function(_) return RE.Settings.FullDungeonName end
 		},
 		viplist = {
+		chatquery = {
+			name = L["Respond to !keys query"],
+			type = "toggle",
+			width = "full",
+			order = 2,
+			set = function(_, val) RE.Settings.ChatQuery = val end,
+			get = function(_) return RE.Settings.ChatQuery end
+		},
 			name = L["Pinned characters"],
 			type = "multiselect",
 			order = 2,
@@ -138,6 +146,11 @@ end
 function RE:OnLoad(self)
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("CHAT_MSG_GUILD")
+	self:RegisterEvent("CHAT_MSG_PARTY")
+	self:RegisterEvent("CHAT_MSG_PARTY_LEADER")
+	self:RegisterEvent("CHAT_MSG_RAID")
+	self:RegisterEvent("CHAT_MSG_RAID_LEADER")
 end
 
 function RE:OnEvent(self, event, name, ...)
@@ -260,6 +273,15 @@ function RE:OnEvent(self, event, name, ...)
 			RequestLeaders(k)
 		end
 		Timer.After(5, function() RE:FindKey(true) end)
+	elseif event == "CHAT_MSG_GUILD" then
+		local msg, sender = ...
+		RE.ParseChat(msg, "GUILD", sender)
+	elseif event == "CHAT_MSG_PARTY" or event == "CHAT_MSG_PARTY_LEADER" then
+		local msg, sender = ...
+		RE.ParseChat(msg, "PARTY", sender)
+	elseif event == "CHAT_MSG_RAID" or event == "CHAT_MSG_RAID_LEADER" then
+		local msg, sender = ...
+		RE.ParseChat(msg, IsPartyLFG() and "INSTANCE_CHAT" or "RAID", sender)
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
 		RE.FillTooltip()
 	elseif event == "QUEST_ACCEPTED" then
@@ -673,5 +695,13 @@ function RE:KeySearchDelay()
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
+	end
+end
+function RE:ParseChat(msg, channel, sender)
+	if RE.Settings.ChatQuery and msg == "!keys" and sender ~= RE.MyName then
+		local keyLink = RE:GetKeystoneLink()
+		if keyLink ~= "" then
+			SendChatMessage(keyLink, channel)
+		end
 	end
 end
