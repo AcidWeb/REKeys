@@ -7,4 +7,6 @@ L["My new key"] = true
 L["Pinned characters"] = true
 L["Don't shorten dungeon names"] = true
 L["When checked tooltip will display full dungeon name."] = true
+L["Set current character as the main one"] = true
+L["Current character is now considered as the main one."] = true
 L["Respond to !keys query"] = true
