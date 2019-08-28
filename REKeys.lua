@@ -49,7 +49,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 8
+RE.DataVersion = 9
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -61,6 +61,7 @@ RE.PartyNames = {}
 RE.PinnedNames = {}
 RE.MainNames = {}
 RE.AltNames = {}
+RE.OverrideNames = {}
 SLASH_REKEYS1 = "/rekeys"
 SLASH_REKEYS2 = "/rk"
 
@@ -199,17 +200,25 @@ function RE:OnEvent(self, event, name, ...)
 		})
 		function RE.LDB:OnEnter()
 			if RE.LDB.text == "|cFF74D06CRE|rKeys" or not RE.MPlusDataReceived then return end
-			if RE.Outdated then
+			local main = RE:GetMain(RE.Settings.GUID)
+			if RE.Outdated or not main then
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
 				if ElvUI then
 					RE.Tooltip:SetTemplate("Transparent", nil, true)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
 					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 				end
-				RE.Tooltip:SetHeaderFont(Game18Font)
-				RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
-				RE.Tooltip:SetHeaderFont(Game15Font)
-				RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
+				if not main then
+					RE.Tooltip:SetHeaderFont(Game18Font)
+					RE.Tooltip:AddHeader("|cffff0000"..L["Your main don't have keystone."].."|r")
+					RE.Tooltip:SetHeaderFont(Game15Font)
+					RE.Tooltip:AddHeader("|cffff0000"..L["Get it or change the main character in options."].."|r")
+				else
+					RE.Tooltip:SetHeaderFont(Game18Font)
+					RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
+					RE.Tooltip:SetHeaderFont(Game15Font)
+					RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
+				end
 			else
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 				if ElvUI then
@@ -290,7 +299,7 @@ function RE:OnEvent(self, event, name, ...)
 	elseif event == "CHAT_MSG_RAID" or event == "CHAT_MSG_RAID_LEADER" then
 		RE:ParseChat(name, IsPartyLFG() and "INSTANCE_CHAT" or "RAID")
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
-		RE.FillTooltip()
+		RE:FillTooltip()
 	elseif event == "QUEST_ACCEPTED" then
 		local questID = ...
 		if IsQuestBounty(questID) then
@@ -441,6 +450,7 @@ function RE:FillSorting()
 	wipe(RE.PinnedNames)
 	wipe(RE.MainNames)
 	wipe(RE.AltNames)
+	wipe(RE.OverrideNames)
 
 	if IsInGroup() and not IsInRaid() then
 		for i=1, 4 do
@@ -496,6 +506,14 @@ function RE:FillTooltip()
 		for i = 1, #RE.PartyNames do
 			local name = RE.PartyNames[i]
 			local data = RE.DB[name]
+			if data[7] == 0 then
+				local main = RE:GetMain(data[6])
+				if main then
+					name = main
+					data = RE.DB[name]
+					RE.OverrideNames[name] = true
+				end
+			end
 			if RaiderIO and IsShiftKeyDown() then
 				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			else
@@ -523,23 +541,25 @@ function RE:FillTooltip()
 	if #RE.PinnedNames > 0 then
 		for i = 1, #RE.PinnedNames do
 			local name = RE.PinnedNames[i]
-			local data = RE.DB[name]
-			if RaiderIO and IsShiftKeyDown() then
-				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			else
-				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			end
-			RE:GetFill(row)
-			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-				for j = 1, #RE.AltNames[data[6]] do
-					local altName = RE.AltNames[data[6]][j]
-					local altData = RE.DB[altName]
-					if RaiderIO and IsShiftKeyDown() then
-						row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, RE:GetRaiderIOScore(altName), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-					else
-						row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
+			if not RE.OverrideNames[name] then
+				local data = RE.DB[name]
+				if RaiderIO and IsShiftKeyDown() then
+					row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				else
+					row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				end
+				RE:GetFill(row)
+				if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
+					for j = 1, #RE.AltNames[data[6]] do
+						local altName = RE.AltNames[data[6]][j]
+						local altData = RE.DB[altName]
+						if RaiderIO and IsShiftKeyDown() then
+							row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, RE:GetRaiderIOScore(altName), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
+						else
+							row = RE.Tooltip:AddLine("> |c"..RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
+						end
+						RE:GetFill(row)
 					end
-					RE:GetFill(row)
 				end
 			end
 		end
@@ -550,7 +570,7 @@ function RE:FillTooltip()
 
 	for i = 1, #RE.MainNames do
 		local name = RE.MainNames[i]
-		if not tContains(RE.PartyNames, name) and not tContains(RE.PinnedNames, name) then
+		if not tContains(RE.PartyNames, name) and not tContains(RE.PinnedNames, name) and not RE.OverrideNames[name] then
 			local data = RE.DB[name]
 			if RaiderIO and IsShiftKeyDown() then
 				row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
@@ -584,6 +604,14 @@ function RE:FillChat()
 		for i = 1, #RE.PartyNames do
 			local name = RE.PartyNames[i]
 			local data = RE.DB[name]
+			if data[7] == 0 then
+				local main = RE:GetMain(data[6])
+				if main then
+					name = main
+					data = RE.DB[name]
+					RE.OverrideNames[name] = true
+				end
+			end
 			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
 				for j = 1, #RE.AltNames[data[6]] do
@@ -599,13 +627,15 @@ function RE:FillChat()
 	if #RE.PinnedNames > 0 then
 		for i = 1, #RE.PinnedNames do
 			local name = RE.PinnedNames[i]
-			local data = RE.DB[name]
-			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-				for j = 1, #RE.AltNames[data[6]] do
-					local altName = RE.AltNames[data[6]][j]
-					local altData = RE.DB[altName]
-					print("> |c"..RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r - |cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]).." - |cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
+			if not RE.OverrideNames[name] then
+				local data = RE.DB[name]
+				print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
+				if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
+					for j = 1, #RE.AltNames[data[6]] do
+						local altName = RE.AltNames[data[6]][j]
+						local altData = RE.DB[altName]
+						print("> |c"..RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r - |cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]).." - |cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
+					end
 				end
 			end
 		end
@@ -614,7 +644,7 @@ function RE:FillChat()
 
 	for i = 1, #RE.MainNames do
 		local name = RE.MainNames[i]
-		if not tContains(RE.PartyNames, name) and not tContains(RE.PinnedNames, name) then
+		if not tContains(RE.PartyNames, name) and not tContains(RE.PinnedNames, name) and not RE.OverrideNames[name] then
 			local data = RE.DB[name]
 			print("|c"..RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
 			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
@@ -770,6 +800,15 @@ function RE:GetRaiderIOScore(name)
 	else
 		return "-"
 	end
+end
+
+function RE:GetMain(guid)
+	for name, data in pairs(RE.DB) do
+		if data[7] == 1 and data[6] == guid then
+			return name
+		end
+	end
+	return false
 end
 
 function RE:KeySearchDelay()
