@@ -25,13 +25,12 @@ local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeysto
 local GetContainerNumSlots = _G.GetContainerNumSlots
 local GetContainerItemID = _G.GetContainerItemID
 local GetContainerItemLink = _G.GetContainerItemLink
+local GetFriendAccountInfo = _G.C_BattleNet.GetFriendAccountInfo
 local RequestLeaders = _G.C_ChallengeMode.RequestLeaders
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
 local RequestRewards = _G.C_MythicPlus.RequestRewards
 local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
 local BNGetNumFriends = _G.BNGetNumFriends
-local BNGetFriendInfo = _G.BNGetFriendInfo
-local BNGetGameAccountInfo = _G.BNGetGameAccountInfo
 local UnitFullName = _G.UnitFullName
 local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
@@ -431,11 +430,10 @@ function RE:RequestKeys()
 	end
 
 	for i = 1, BNGetNumFriends() do
-		local _, _, _, _, toonName, toonID = BNGetFriendInfo(i)
-		if toonName then
-			local _, name, _, realmName, _, faction = BNGetGameAccountInfo(toonID)
-			if faction == RE.MyFaction and realmName == RE.MyRealm then
-				COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", name.."-"..RE.MyRealm)
+		local accountInfo = GetFriendAccountInfo(i)
+		if accountInfo.gameAccountInfo.characterName then
+			if accountInfo.factionName == RE.MyFaction and accountInfo.gameAccountInfo.realmName == RE.MyRealm then
+				COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", accountInfo.gameAccountInfo.characterName.."-"..RE.MyRealm)
 			end
 		end
 	end
