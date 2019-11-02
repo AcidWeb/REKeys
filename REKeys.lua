@@ -54,6 +54,7 @@ RE.BestRun = 0
 RE.Outdated = false
 RE.Fill = true
 RE.MPlusDataReceived = false
+RE.KeyQueryLimit = false
 RE.ThrottleTable = {}
 RE.PartyCheck = {}
 RE.PartyNames = {}
@@ -835,7 +836,9 @@ function RE:UpdateMain()
 end
 
 function RE:ParseChat(msg, channel)
-	if RE.Settings.ChatQuery and msg == "!keys" then
+	if RE.Settings.ChatQuery and not RE.KeyQueryLimit and msg == "!keys" then
+		RE.KeyQueryLimit = true
+		Timer.After(30, function() RE.KeyQueryLimit = false end)
 		local keyLink = RE:GetKeystoneLink()
 		if keyLink ~= "" then
 			SendChatMessage(keyLink, channel)
