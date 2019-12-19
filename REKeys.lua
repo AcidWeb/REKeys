@@ -112,9 +112,9 @@ RE.AffixSchedule = {
 	{10, 8, 14},
 	{9, 7, 13},
 	{10, 11, 3},
-	{9, 6, 3},
+	{9, 6, 4},
 	{10, 5, 14},
-	{9, 6, 4}
+	{9, 11, 2}
 }
 RE.DungeonNames = {
 	[247] = "ML",
@@ -434,7 +434,7 @@ function RE:RequestKeys()
 
 	for i = 1, BNGetNumFriends() do
 		local accountInfo = GetFriendAccountInfo(i)
-		if accountInfo.gameAccountInfo.characterName then
+		if accountInfo and accountInfo.gameAccountInfo.characterName then
 			if accountInfo.factionName == RE.MyFaction and accountInfo.gameAccountInfo.realmName == RE.MyRealm then
 				COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", accountInfo.gameAccountInfo.characterName.."-"..RE.MyRealm)
 			end
