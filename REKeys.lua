@@ -48,7 +48,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 9
+RE.DataVersion = 10
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -102,6 +102,7 @@ RE.AceConfig = {
 		}
 	}
 }
+-- TODO Season 4
 RE.AffixSchedule = {
 	{10, 7, 12},
 	{9, 6, 13},
@@ -126,19 +127,26 @@ RE.DungeonNames = {
 	[248] = "WM",
 	[252] = "SOTS",
 	[249] = "KR",
-	[250] = "TOS"
+	[250] = "TOS",
+	[369] = "YARD",
+	[370] = "WORK"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
-	[2] = "FFE31C00",
-	[3] = "FFC63900",
-	[4] = "FFAA5500",
-	[5] = "FF8E7100",
-	[6] = "FF718E00",
-	[7] = "FF55AA00",
-	[8] = "FF39C600",
-	[9] = "FF1CE300",
-	[10] = "FF00FF00"
+	[2] = "FFF93E00",
+	[3] = "FFF35900",
+	[4] = "FFEC6D00",
+	[5] = "FFE47F00",
+	[6] = "FFDC8F00",
+	[7] = "FFD39D00",
+	[8] = "FFC9AB00",
+	[9] = "FFBDB800",
+	[10] = "FFB0C500",
+	[11] = "FFA1D100",
+	[12] = "FF8EDD00",
+	[13] = "FF77E800",
+	[14] = "FF57F400",
+	[15] = "FF00FF00"
 }
 RE.Factions = {
 	["Alliance"] = 1,
@@ -766,8 +774,8 @@ function RE:GetBestRunString(bestRun)
 end
 
 function RE:GetKeystoneLevelColor(level)
-	if level > 10 then
-		return RE.RewardColors[10]
+	if level > 15 then
+		return RE.RewardColors[15]
 	else
 		return RE.RewardColors[level]
 	end

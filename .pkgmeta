@@ -22,3 +22,4 @@ ignore:
   - Libs/LibQTip-1.0/lib.xml
   - Libs/LibQTip-1.0/LibQTip-1.0.toc
   - Libs/LibQTip-1.0/LICENSE.txt
+  - Libs/LibQTip-1.0/LibStub
