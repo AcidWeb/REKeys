@@ -37,7 +37,6 @@ local UnitClass = _G.UnitClass
 local UnitFactionGroup = _G.UnitFactionGroup
 local UnitExists = _G.UnitExists
 local UnitGUID = _G.UnitGUID
-local IsQuestBounty = _G.IsQuestBounty
 local IsItemKeystoneByID = _G.C_Item.IsItemKeystoneByID
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
@@ -803,7 +802,7 @@ function RE:KeySearchDelay()
 	end
 	RE:FindKey()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
+	--_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
