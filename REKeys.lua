@@ -153,13 +153,6 @@ RE.Factions = {
 	["Horde"] = 2,
 }
 
-local function ElvUISwag(sender)
-	if sender == "Livarax-BurningLegion" then
-		return [[|TInterface\PvPRankBadges\PvPRank09:0|t ]]
-	end
-	return nil
-end
-
 -- Event functions
 
 function RE:OnLoad(self)
@@ -267,10 +260,6 @@ function RE:OnEvent(self, event, name, ...)
 				RE:RequestKeys()
 				Timer.After(10, RE.FillChat)
 			end
-		end
-
-		if ElvUI then
-			ElvUI[1]:GetModule("Chat"):AddPluginIcons(ElvUISwag)
 		end
 
 		COMM:RegisterComm("REKeys", RE.OnAddonMessage)
