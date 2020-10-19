@@ -8,6 +8,7 @@
 ## X-Curse-Project-ID: 282397
 ## X-WoWI-ID: 24510
 
+TaintLess.xml
 Embeds.xml
 Locale\Locale.xml
 REKeys.xml
