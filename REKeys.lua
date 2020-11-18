@@ -38,6 +38,7 @@ local UnitFactionGroup = _G.UnitFactionGroup
 local UnitExists = _G.UnitExists
 local UnitGUID = _G.UnitGUID
 local IsItemKeystoneByID = _G.C_Item.IsItemKeystoneByID
+local IsQuestBounty = _G.C_QuestLog.IsQuestBounty
 local IsInGroup = _G.IsInGroup
 local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
@@ -300,9 +301,9 @@ function RE:OnEvent(self, event, name, ...)
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
 		RE:FillTooltip()
 	elseif event == "QUEST_ACCEPTED" then
-		-- TODO WEEKLY_REWARDS_UPDATE???
+		-- TODO Shadowlands
 		local questID = ...
-		if IsQuestBounty(questID) then
+		if questID and IsQuestBounty(questID) then
 			RE.MPlusDataReceived = false
 			RE:FindKey()
 		end
@@ -802,7 +803,7 @@ function RE:KeySearchDelay()
 	end
 	RE:FindKey()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-	--_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
+	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
 	if RaiderIO then
 		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
