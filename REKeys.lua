@@ -49,7 +49,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 11
+RE.DataVersion = 12
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -103,37 +103,30 @@ RE.AceConfig = {
 		}
 	}
 }
--- TODO Shadowlands
 RE.AffixSchedule = {
-	{10, 7, 12},
-	{9, 6, 13},
-	{10, 8, 12},
-	{9, 5, 3},
-	{10, 7, 2},
-	{9, 11, 4},
-	{10, 8, 14},
-	{9, 7, 13},
+	{10, 11, 124},
+	{9, 8, 12},
+	{10, 122, 13},
+	{9, 6, 14},
 	{10, 11, 3},
-	{9, 6, 4},
-	{10, 5, 14},
-	{9, 11, 2}
+	{9, 123, 12},
+	{10, 7, 124},
+	{9, 122, 4},
+	{10, 8, 14},
+	{9, 6, 13},
+	{10, 123, 3},
+	{9, 7, 4}
 }
--- TODO Shadowlands
 RE.DungeonNames = {
-	[247] = "ML",
-	[244] = "AD",
-	[245] = "FH",
-	[246] = "TD",
-	[353] = "SIEGE",
-	[251] = "UNDR",
-	[248] = "WM",
-	[252] = "SOTS",
-	[249] = "KR",
-	[250] = "TOS",
-	[369] = "YARD",
-	[370] = "WORK"
+	[378] = "HOA",
+	[381] = "SOA",
+	[382] = "TOP",
+	[380] = "SD",
+	[376] = "WAKE",
+	[379] = "PF",
+	[377] = "DOS",
+	[375] = "MISTS"
 }
--- TODO Shadowlands
 RE.RewardColors = {
 	[1] = "FFFF0000",
 	[2] = "FFF93E00",
@@ -301,7 +294,6 @@ function RE:OnEvent(self, event, name, ...)
 	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
 		RE:FillTooltip()
 	elseif event == "QUEST_ACCEPTED" then
-		-- TODO Shadowlands
 		local questID = ...
 		if questID and IsQuestBounty(questID) then
 			RE.MPlusDataReceived = false
