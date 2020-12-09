@@ -657,7 +657,8 @@ function RE:GetKeystoneLink()
 	for bag = 0, _G.NUM_BAG_SLOTS do
 		local bagSlots = GetContainerNumSlots(bag)
 		for slot = 1, bagSlots do
-			if IsItemKeystoneByID(GetContainerItemID(bag, slot)) then
+			local itemID = GetContainerItemID(bag, slot)
+			if itemID and IsItemKeystoneByID(itemID) then
 				keyLink = GetContainerItemLink(bag, slot)
 				break
 			end
