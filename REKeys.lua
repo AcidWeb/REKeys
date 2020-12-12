@@ -7,7 +7,7 @@ local COMM = LibStub("AceComm-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 _G.REKeys = RE
 
-local strsplit, pairs, ipairs, select, sformat, strfind, time, date, tonumber, wipe, sort, tinsert, next, print, unpack, tContains = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack, _G.tContains
+local strsplit, pairs, ipairs, select, sformat, strfind, time, date, tonumber, wipe, sort, tinsert, next, print, unpack, tContains, tSort = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.format, _G.strfind, _G.time, _G.date, _G.tonumber, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack, _G.tContains, _G.table.sort
 local CreateFont = _G.CreateFont
 local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local SendChatMessage = _G.SendChatMessage
@@ -17,7 +17,7 @@ local GetFriendInfoByIndex = _G.C_FriendList.GetFriendInfoByIndex
 local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local GetGuildLeaders = _G.C_ChallengeMode.GetGuildLeaders
-local GetWeeklyChestRewardLevel = _G.C_MythicPlus.GetWeeklyChestRewardLevel
+local GetRunHistory = _G.C_MythicPlus.GetRunHistory
 local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
 local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
 local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
@@ -349,7 +349,7 @@ function RE:FindKey(dungeonCompleted)
 	end
 
 	if dungeonCompleted then
-		RE.BestRun = GetWeeklyChestRewardLevel()
+		RE.BestRun = RE:GetBestRun()
 		if RE.Settings.MyKeys[RE.MyFullName] then
 			RE.Settings.MyKeys[RE.MyFullName]["BestRun"] = RE.BestRun
 			RE.DB[RE.MyFullName][8] = RE.BestRun
@@ -381,7 +381,7 @@ function RE:FindKey(dungeonCompleted)
 		RE.DB[RE.MyFullName] = nil
 		RE.LDB.text = "|cffe6cc80-|r"
 	else
-		RE.BestRun = GetWeeklyChestRewardLevel()
+		RE.BestRun = RE:GetBestRun()
 		local keystoneLevel = GetOwnedKeystoneLevel()
 		if not RE.Settings.MyKeys[RE.MyFullName] then
 			RE.BestRun = 0
@@ -742,6 +742,16 @@ function RE:GetBestRunString(bestRun)
 		return " [+"..bestRun.."]"
 	else
 		return ""
+	end
+end
+
+function RE:GetBestRun()
+	local runHistory = GetRunHistory()
+	if #runHistory > 0 then
+		tSort(runHistory, function(left, right) return left.level > right.level; end)
+		return tonumber(runHistory[1].level)
+	else
+		return 0
 	end
 end
 
