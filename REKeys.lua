@@ -764,14 +764,14 @@ function RE:GetKeystoneLevelColor(level)
 end
 
 function RE:GetRaiderIOScore(name)
-	local data = RaiderIO.GetPlayerProfile(RaiderIO.ProfileOutput.MYTHICPLUS, name, nil, RE.Factions[RE.MyFaction])
-	if data then
+	local data = RaiderIO.GetProfile(name, RE.Factions[RE.MyFaction])
+	if data and data.mythicKeystoneProfile then
 		local payload = false
 		local previous = false
-		if data.profile.mplusCurrent.score > 0 then
-			payload = data.profile.mplusCurrent
-		elseif data.profile.mplusPrevious.score > 0 then
-			payload = data.profile.mplusPrevious
+		if data.mythicKeystoneProfile.mplusCurrent.score > 0 then
+			payload = data.mythicKeystoneProfile.mplusCurrent
+		elseif data.mythicKeystoneProfile.mplusPrevious.score > 0 then
+			payload = data.mythicKeystoneProfile.mplusPrevious
 			previous = true
 		end
 		if payload then
