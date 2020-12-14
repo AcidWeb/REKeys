@@ -16,7 +16,6 @@ local GetNumFriends = _G.C_FriendList.GetNumFriends
 local GetFriendInfoByIndex = _G.C_FriendList.GetFriendInfoByIndex
 local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
-local GetGuildLeaders = _G.C_ChallengeMode.GetGuildLeaders
 local GetRunHistory = _G.C_MythicPlus.GetRunHistory
 local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
 local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
@@ -49,7 +48,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 12
+RE.DataVersion = 13
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -122,27 +121,26 @@ RE.DungeonNames = {
 	[381] = "SOA",
 	[382] = "TOP",
 	[380] = "SD",
-	[376] = "WAKE",
+	[376] = "NW",
 	[379] = "PF",
 	[377] = "DOS",
 	[375] = "MISTS"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
-	[2] = "FFF93E00",
-	[3] = "FFF35900",
-	[4] = "FFEC6D00",
-	[5] = "FFE47F00",
-	[6] = "FFDC8F00",
-	[7] = "FFD39D00",
-	[8] = "FFC9AB00",
-	[9] = "FFBDB800",
-	[10] = "FFB0C500",
-	[11] = "FFA1D100",
-	[12] = "FF8EDD00",
-	[13] = "FF77E800",
-	[14] = "FF57F400",
-	[15] = "FF00FF00"
+	[2] = "FFEB1300",
+	[3] = "FFD72700",
+	[4] = "FFC43A00",
+	[5] = "FFB04E00",
+	[6] = "FF9C6200",
+	[7] = "FF897500",
+	[8] = "FF758900",
+	[9] = "FF629C00",
+	[10] = "FF4EB000",
+	[11] = "FF3AC400",
+	[12] = "FF27D700",
+	[13] = "FF13EB00",
+	[14] = "FF00FF00"
 }
 RE.Factions = {
 	["Alliance"] = 1,
@@ -705,16 +703,22 @@ function RE:GetPrefixes()
 	local currentAffixes = GetCurrentAffixes()
 	if currentAffixes then
 		if #currentAffixes == 4 then
+			local bestRuns = RE:GetParsedBestRun()
 			local leftPanel = "[|cffff0000-|r]"
+			local centerPanel = "[|cffff0000-|r]"
 			local rightPanel = "[|cffff0000-|r]"
-			local topRuns = GetGuildLeaders()
-			if RE.BestRun > 0 then
-				leftPanel = "[|c"..RE:GetKeystoneLevelColor(RE.BestRun).."+"..RE.BestRun.."|r] [|c"..RE:GetKeystoneLevelColor(RE.BestRun)..GetRewardLevelFromKeystoneLevel(RE.BestRun).."|r]"
+			if bestRuns[1] > 0 then
+				leftPanel = "[|c"..RE:GetKeystoneLevelColor(bestRuns[1]).."+"..bestRuns[1].."|r] [|c"..RE:GetKeystoneLevelColor(bestRuns[1])..GetRewardLevelFromKeystoneLevel(bestRuns[1]).."|r]"
 			end
-			if topRuns and topRuns[1] then
-				rightPanel = "[|c"..RE:GetKeystoneLevelColor(topRuns[1].keystoneLevel)..RE.DungeonNames[topRuns[1].mapChallengeModeID].." +"..topRuns[1].keystoneLevel.."|r]"
+			if bestRuns[2] > 0 then
+				centerPanel = "[|c"..RE:GetKeystoneLevelColor(bestRuns[2]).."+"..bestRuns[2].."|r] [|c"..RE:GetKeystoneLevelColor(bestRuns[2])..GetRewardLevelFromKeystoneLevel(bestRuns[2]).."|r]"
 			end
-			RE.Tooltip:AddHeader(leftPanel, "|cffff0000<|r", "|cffffffff"..GetAffixInfo(currentAffixes[4].id).."|r", "|cffff0000>|r", rightPanel)
+			if bestRuns[3] > 0 then
+				rightPanel = "[|c"..RE:GetKeystoneLevelColor(bestRuns[3]).."+"..bestRuns[3].."|r] [|c"..RE:GetKeystoneLevelColor(bestRuns[3])..GetRewardLevelFromKeystoneLevel(bestRuns[3]).."|r]"
+			end
+			RE.Tooltip:AddHeader(leftPanel, "|cffffffff|||r", centerPanel, "|cffffffff|||r", rightPanel)
+			RE.Tooltip:AddLine()
+			RE.Tooltip:AddSeparator()
 			RE.Tooltip:AddLine()
 		end
 		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
@@ -737,14 +741,6 @@ function RE:GetFill(row)
 	end
 end
 
-function RE:GetBestRunString(bestRun)
-	if bestRun > 1 then
-		return " [+"..bestRun.."]"
-	else
-		return ""
-	end
-end
-
 function RE:GetBestRun()
 	local runHistory = GetRunHistory()
 	if #runHistory > 0 then
@@ -755,9 +751,33 @@ function RE:GetBestRun()
 	end
 end
 
+function RE:GetParsedBestRun()
+	local bestRuns = {0, 0 ,0}
+	local runHistory = GetRunHistory(false, true)
+	if #runHistory > 0 then
+		tSort(runHistory, function(left, right) return left.level > right.level; end)
+		bestRuns[1] = runHistory[1].level
+		if #runHistory >= 4 then
+			bestRuns[2] = runHistory[4].level
+		end
+		if #runHistory >= 10 then
+			bestRuns[3] = runHistory[10].level
+		end
+	end
+	return bestRuns
+end
+
+function RE:GetBestRunString(bestRun)
+	if bestRun > 1 then
+		return " [+"..bestRun.."]"
+	else
+		return ""
+	end
+end
+
 function RE:GetKeystoneLevelColor(level)
-	if level > 15 then
-		return RE.RewardColors[15]
+	if level > 14 then
+		return RE.RewardColors[14]
 	else
 		return RE.RewardColors[level]
 	end
