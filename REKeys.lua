@@ -48,7 +48,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 13
+RE.DataVersion = 14
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -355,12 +355,14 @@ function RE:FindKey(dungeonCompleted)
 	end
 
 	local resetTimestamp = GetSecondsUntilWeeklyReset()
-	if resetTimestamp and RE.Settings.ResetTimestamp <= resetTimestamp then
+	if resetTimestamp then
+		if resetTimestamp > RE.Settings.ResetTimestamp then
+			RE.Settings.MyKeys = {}
+			RE.BestRun = 0
+			RE.Settings.CurrentWeek = 0
+			wipe(RE.DB)
+		end
 		RE.Settings.ResetTimestamp = resetTimestamp
-		RE.Settings.MyKeys = {}
-		RE.BestRun = 0
-		RE.Settings.CurrentWeek = 0
-		wipe(RE.DB)
 	end
 	if RE.Settings.CurrentWeek == 0 then
 		local currentAffixes = GetCurrentAffixes()
