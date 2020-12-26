@@ -1,6 +1,7 @@
 local _G = _G
 local _, RE = ...
 local LDB = LibStub("LibDataBroker-1.1")
+local LDBI = LibStub("LibDBIcon-1.0")
 local QTIP = LibStub("LibQTip-1.0")
 local BUCKET = LibStub("AceBucket-3.0")
 local COMM = LibStub("AceComm-3.0")
@@ -65,7 +66,7 @@ RE.OverrideNames = {}
 _G.SLASH_REKEYS1 = "/rekeys"
 _G.SLASH_REKEYS2 = "/rk"
 
-RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["PinList"] = {}, ["FullDungeonName"] = false, ["ResetTimestamp"] = 0, ["ChatQuery"] = true}
+RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["PinList"] = {}, ["FullDungeonName"] = false, ["ResetTimestamp"] = 0, ["ChatQuery"] = true, ["MinimapButtonSettings"] = {["hide"] = true}}
 RE.AceConfig = {
 	type = "group",
 	args = {
@@ -86,17 +87,25 @@ RE.AceConfig = {
 			set = function(_, val) RE.Settings.ChatQuery = val end,
 			get = function(_) return RE.Settings.ChatQuery end
 		},
+		minimap = {
+			name = L["Display minimap button"],
+			type = "toggle",
+			width = "full",
+			order = 3,
+			set = function(_, val) RE.Settings.MinimapButtonSettings.hide = not val; if RE.Settings.MinimapButtonSettings.hide then LDBI:Hide("REKeys") else LDBI:Show("REKeys") end end,
+			get = function(_) return not RE.Settings.MinimapButtonSettings.hide end
+		},
 		setmain = {
 			name = L["Set current character as the main one"],
 			type = "execute",
 			width = "double",
-			order = 3,
+			order = 4,
 			func = function(_) RE:UpdateMain() end
 		},
 		pinlist = {
 			name = L["Pinned characters"],
 			type = "multiselect",
-			order = 4,
+			order = 5,
 			get = function(_, player) if RE.Settings.PinList[player] then return true else return false end end,
 			set = function(_, player, state) if not state then RE.Settings.PinList[player] = nil else RE.Settings.PinList[player] = true end end,
 		}
@@ -247,6 +256,7 @@ function RE:OnEvent(self, event, name, ...)
 				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
 			end
 		end
+		LDBI:Register("REKeys", RE.LDB, RE.Settings.MinimapButtonSettings)
 
 		_G.SlashCmdList["REKEYS"] = function()
 			if not QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then

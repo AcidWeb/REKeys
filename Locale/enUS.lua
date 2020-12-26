@@ -10,5 +10,6 @@ L["When checked tooltip will display full dungeon name."] = true
 L["Set current character as the main one"] = true
 L["Current character is now considered as the main one."] = true
 L["Respond to !keys query"] = true
+L["Display minimap button"] = true
 L["Your main don't have keystone."] = true
 L["Get it or change the main character in options."] = true

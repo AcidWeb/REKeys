@@ -4,6 +4,7 @@ externals:
   Libs/LibStub: https://repos.wowace.com/wow/ace3/trunk/LibStub
   Libs/CallbackHandler-1.0: https://repos.wowace.com/wow/ace3/trunk/CallbackHandler-1.0
   Libs/LibDataBroker-1.1: https://repos.wowace.com/wow/libdatabroker-1-1
+  Libs/LibDBIcon-1.0: https://repos.wowace.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
   Libs/LibQTip-1.0: https://repos.wowace.com/wow/libqtip-1-0
   Libs/AceGUI-3.0: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0
   Libs/AceConfigDialog-3.0: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0/AceConfigDialog-3.0
@@ -19,6 +20,7 @@ ignore:
   - .luacheckrc
   - Libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
   - Libs/LibDataBroker-1.1/README.textile
+  - Libs/LibDBIcon-1.0/lib.xml
   - Libs/LibQTip-1.0/lib.xml
   - Libs/LibQTip-1.0/LibQTip-1.0.toc
   - Libs/LibQTip-1.0/LICENSE.txt
