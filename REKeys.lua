@@ -49,7 +49,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 14
+RE.DataVersion = 15
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -367,8 +367,13 @@ function RE:OnAddonMessageAK(msg, channel)
 		if #payload > 0 then
 			for _, data in pairs(payload) do
 				local name, class, dungeonID, keyLevel, weeklyBest = strsplit(':', data)
-				if not RE.DB[name] then RE.DB[name] = {} end
-				RE.DB[name] = {RE.DataVersion, time(date('!*t', GetServerTime())), class, tonumber(dungeonID), tonumber(keyLevel), "AK-"..math.random(1, 10000000), 1, tonumber(weeklyBest)}
+				dungeonID = tonumber(dungeonID)
+				keyLevel = tonumber(keyLevel)
+				weeklyBest = tonumber(weeklyBest)
+				if name and class and dungeonID and keyLevel and weeklyBest then
+					if not RE.DB[name] then RE.DB[name] = {} end
+					RE.DB[name] = {RE.DataVersion, time(date('!*t', GetServerTime())), class, dungeonID, keyLevel, "AK-"..math.random(1, 10000000), 1, weeklyBest}
+				end
 			end
 		end
 	end
