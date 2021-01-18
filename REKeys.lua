@@ -49,7 +49,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 15
+RE.DataVersion = 16
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -370,7 +370,7 @@ function RE:OnAddonMessageAK(msg, channel)
 				dungeonID = tonumber(dungeonID)
 				keyLevel = tonumber(keyLevel)
 				weeklyBest = tonumber(weeklyBest)
-				if name and class and dungeonID and keyLevel and weeklyBest then
+				if name and name ~= RE.MyFullName and class and dungeonID and keyLevel and weeklyBest then
 					if not RE.DB[name] then RE.DB[name] = {} end
 					RE.DB[name] = {RE.DataVersion, time(date('!*t', GetServerTime())), class, dungeonID, keyLevel, "AK-"..math.random(1, 10000000), 1, weeklyBest}
 				end
