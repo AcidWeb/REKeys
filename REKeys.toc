@@ -7,6 +7,7 @@
 ## X-Website: https://www.curseforge.com/wow/addons/rekeys-keystone-manager
 ## X-Curse-Project-ID: 282397
 ## X-WoWI-ID: 24510
+## X-Wago-ID: XrNke8Ka
 
 TaintLess.xml
 Embeds.xml
