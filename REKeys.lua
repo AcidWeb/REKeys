@@ -212,25 +212,17 @@ function RE:OnEvent(self, event, name, ...)
 		})
 		function RE.LDB:OnEnter()
 			if RE.LDB.text == "|cFF74D06CRE|rKeys" or not RE.MPlusDataReceived then return end
-			local main = RE:GetMain(RE.Settings.GUID)
-			if RE.Outdated or not main then
+			if RE.Outdated then
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
 				if ElvUI then
 					RE.Tooltip:SetTemplate("Transparent", nil, true)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
 					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 				end
-				if not main then
-					RE.Tooltip:SetHeaderFont(_G.Game18Font)
-					RE.Tooltip:AddHeader("|cffff0000"..L["Your main don't have keystone."].."|r")
-					RE.Tooltip:SetHeaderFont(_G.Game15Font)
-					RE.Tooltip:AddHeader("|cffff0000"..L["Get it or change the main character in options."].."|r")
-				else
-					RE.Tooltip:SetHeaderFont(_G.Game18Font)
-					RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
-					RE.Tooltip:SetHeaderFont(_G.Game15Font)
-					RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
-				end
+				RE.Tooltip:SetHeaderFont(_G.Game18Font)
+				RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
+				RE.Tooltip:SetHeaderFont(_G.Game15Font)
+				RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
 			else
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 				if ElvUI then
