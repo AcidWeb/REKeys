@@ -49,7 +49,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 16
+RE.DataVersion = 17
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -120,6 +120,7 @@ RE.AceConfig = {
 	}
 }
 RE.AffixSchedule = {
+	-- TODO: 9.2 update
 	{10, 11, 124},
 	{9, 6, 3},
 	{10, 122, 12},
