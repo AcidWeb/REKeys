@@ -1,11 +1,11 @@
 ﻿# REKeys
 
-[Curse](https://www.curseforge.com/wow/addons/rekeys-keystone-manager)
+[Wago Addons](https://addons.wago.io/addons/rekeys-keystone-manager)
 
-[WoWInterface](http://www.wowinterface.com/downloads/fileinfo.php?id=24510)
+[WoWInterface](https://www.wowinterface.com/downloads/info24510-REKeys-KeystoneManager.html)
 
 ## COPYRIGHT
 
 All Rights Reserved unless otherwise explicitly stated.
 
-Copyright (c) 2013-2020 Paweł Jastrzębski <pawelj@iosphe.re>
+Copyright (c) 2013-2022 Paweł Jastrzębski <pawelj@iosphe.re>
