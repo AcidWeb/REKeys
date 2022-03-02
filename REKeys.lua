@@ -142,7 +142,9 @@ RE.DungeonNames = {
 	[376] = "NW",
 	[379] = "PF",
 	[377] = "DOS",
-	[375] = "MISTS"
+	[375] = "MISTS",
+	[391] = "STRT",
+	[392] = "GMBT"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
