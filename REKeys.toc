@@ -1,7 +1,7 @@
-## Interface: 90200
+## Interface: 90205
 ## Title: |cFF74D06CRE|rKeys
 ## Notes: Collect information about keystones owned by your friends.
-## Version: 1.10.8
+## Version: 1.10.9
 ## Author: AcidWeb
 ## SavedVariables: REKeysDB, REKeysSettings
 ## X-WoWI-ID: 24510
