@@ -10,7 +10,6 @@ _G.REKeys = RE
 
 local strsplit, pairs, ipairs, select, sformat, strfind, strtrim, time, date, tonumber, wipe, sort, tinsert, next, print, unpack, tContains, tSort = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.format, _G.strfind, _G.strtrim, _G.time, _G.date, _G.tonumber, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack, _G.tContains, _G.table.sort
 local CreateFont = _G.CreateFont
-local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
 local SendChatMessage = _G.SendChatMessage
 local GetServerTime = _G.GetServerTime
 local GetNumFriends = _G.C_FriendList.GetNumFriends
@@ -211,7 +210,7 @@ function RE:OnEvent(self, event, name, ...)
 
 		RE.TooltipHeaderFont = CreateFont("REKeysTooltipHeaderFont")
 		RE.TooltipHeaderFont:CopyFontObject(_G.GameTooltipHeaderText)
-		RE.TooltipHeaderFont:SetFont(select(1, RE.TooltipHeaderFont:GetFont()), 15)
+		RE.TooltipHeaderFont:SetFont(select(1, RE.TooltipHeaderFont:GetFont()), 15, "")
 
 		RE.LDB = LDB:NewDataObject("REKeys", {
 			type = "data source",
@@ -260,8 +259,8 @@ function RE:OnEvent(self, event, name, ...)
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
 				end
 			elseif button == "RightButton" then
-				_G.InterfaceOptionsFrame:Show()
-				InterfaceOptionsFrame_OpenToCategory(RE.OptionsMenu)
+				_G.SettingsPanel:Show()
+				_G.SettingsPanel:OpenToCategory("REKeys")
 			end
 		end
 		LDBI:Register("REKeys", RE.LDB, RE.Settings.MinimapButtonSettings)
