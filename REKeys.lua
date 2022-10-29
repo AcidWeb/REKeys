@@ -119,36 +119,28 @@ RE.AceConfig = {
 	}
 }
 RE.AffixSchedule = {
-	{11, 124, 10},
-	{6, 3, 9},
-	{122, 12, 10},
-	{123, 4, 9},
-	{7, 14, 10},
-	{8, 124, 9},
-	{6, 13, 10},
-	{11, 3, 9},
-	{123, 4, 10},
-	{122, 14, 9},
-	{8, 12, 10},
-	{7, 13, 9}
+	{9, 122, 14},
+	{10, 8, 12},
+	{9, 7, 13},
+	{10, 11, 124},
+	{9, 6, 3},
+	{10, 122, 12},
+	{9, 123,  4},
+	{10, 7, 14},
+	{9, 8, 124},
+	{10, 6, 13},
+	{9, 11, 3},
+	{10, 123,  4}
 }
 RE.DungeonNames = {
-	[378] = "HOA",
-	[381] = "SOA",
-	[382] = "TOP",
-	[380] = "SD",
-	[376] = "NW",
-	[379] = "PF",
-	[377] = "DOS",
-	[375] = "MISTS",
-	[391] = "STRT",
-	[392] = "GMBT",
 	[169] = "ID",
 	[166] = "GD",
+	[227] = "LOWR",
+	[234] = "UPPR",
 	[370] = "WORK",
 	[369] = "YARD",
-	[227] = "LOWR",
-	[234] = "UPPR"
+	[391] = "STRT",
+	[392] = "GMBT"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
@@ -245,7 +237,7 @@ function RE:OnEvent(self, event, name, ...)
 			RE.Tooltip:Show()
 		end
 		function RE.LDB:OnLeave()
-			if RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0 then
+			if RE.UpdateTimer and not RE.UpdateTimer:IsCancelled() then
 				RE.UpdateTimer:Cancel()
 				RE.UpdateTimer = nil
 			end
@@ -346,7 +338,7 @@ function RE:OnAddonMessage(msg, channel, sender)
 			if msg[10] and msg[10] ~= RE.MyFullName then return end
 			if not RE.DB[msg[3]] then RE.DB[msg[3]] = {} end
 			RE.DB[msg[3]] = {RE.DataVersion, time(date("!*t", GetServerTime())), msg[4], tonumber(msg[5]), tonumber(msg[6]), msg[7], tonumber(msg[8]), tonumber(msg[9])}
-			if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0) then
+			if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and not RE.UpdateTimer:IsCancelled()) then
 				RE.UpdateTimer = Timer.NewTimer(2, RE.FillTooltip)
 			end
 		end
