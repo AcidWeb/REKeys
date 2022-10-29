@@ -17,11 +17,3 @@ externals:
 
 ignore:
   - README.md
-  - .luacheckrc
-  - Libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
-  - Libs/LibDataBroker-1.1/README.textile
-  - Libs/LibDBIcon-1.0/lib.xml
-  - Libs/LibQTip-1.0/lib.xml
-  - Libs/LibQTip-1.0/LibQTip-1.0.toc
-  - Libs/LibQTip-1.0/LICENSE.txt
-  - Libs/LibQTip-1.0/LibStub

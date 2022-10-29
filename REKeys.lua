@@ -329,7 +329,7 @@ function RE:OnAddonMessage(msg, channel, sender)
 	if tonumber(msg[2]) == RE.DataVersion and sender ~= RE.MyFullName then
 		if msg[1] == "KR" and next(RE.Settings.MyKeys) ~= nil then
 			if not RE.ThrottleTable[sender] then RE.ThrottleTable[sender] = 0 end
-			local timestamp = time(date('!*t', GetServerTime()))
+			local timestamp = time(date("!*t", GetServerTime()))
 			if timestamp - RE.ThrottleTable[sender] > 30 then
 				RE.ThrottleTable[sender] = timestamp
 				if channel == "PARTY" or channel == "RAID" or channel == "INSTANCE_CHAT" then
@@ -345,7 +345,7 @@ function RE:OnAddonMessage(msg, channel, sender)
 		elseif msg[1] == "KD" then
 			if msg[10] and msg[10] ~= RE.MyFullName then return end
 			if not RE.DB[msg[3]] then RE.DB[msg[3]] = {} end
-			RE.DB[msg[3]] = {RE.DataVersion, time(date('!*t', GetServerTime())), msg[4], tonumber(msg[5]), tonumber(msg[6]), msg[7], tonumber(msg[8]), tonumber(msg[9])}
+			RE.DB[msg[3]] = {RE.DataVersion, time(date("!*t", GetServerTime())), msg[4], tonumber(msg[5]), tonumber(msg[6]), msg[7], tonumber(msg[8]), tonumber(msg[9])}
 			if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and RE.UpdateTimer._remainingIterations > 0) then
 				RE.UpdateTimer = Timer.NewTimer(2, RE.FillTooltip)
 			end
@@ -365,13 +365,13 @@ function RE:OnAddonMessageAK(msg, channel)
 		end
 		if #payload > 0 then
 			for _, data in pairs(payload) do
-				local name, class, dungeonID, keyLevel, weeklyBest = strsplit(':', data)
+				local name, class, dungeonID, keyLevel, weeklyBest = strsplit(":", data)
 				dungeonID = tonumber(dungeonID)
 				keyLevel = tonumber(keyLevel)
 				weeklyBest = tonumber(weeklyBest)
 				if name and name ~= RE.MyFullName and class and dungeonID and keyLevel and weeklyBest then
 					if not RE.DB[name] then RE.DB[name] = {} end
-					RE.DB[name] = {RE.DataVersion, time(date('!*t', GetServerTime())), class, dungeonID, keyLevel, "AK-"..math.random(1, 10000000), 1, weeklyBest}
+					RE.DB[name] = {RE.DataVersion, time(date("!*t", GetServerTime())), class, dungeonID, keyLevel, "AK-"..math.random(1, 10000000), 1, weeklyBest}
 				end
 			end
 		end
@@ -435,7 +435,7 @@ function RE:FindKey(dungeonCompleted)
 		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
 		local isMain = RE.Settings.GUID == UnitGUID("player") and 1 or 0
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
-		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date('!*t', GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.GUID, isMain, RE.BestRun}
+		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date("!*t", GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.GUID, isMain, RE.BestRun}
 		if dungeonCompleted and IsInGroup() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..RE:GetKeystoneLink(), "PARTY")
 		end
@@ -446,7 +446,7 @@ function RE:FindKey(dungeonCompleted)
 end
 
 function RE:RequestKeys()
-	local timestamp = time(date('!*t', GetServerTime()))
+	local timestamp = time(date("!*t", GetServerTime()))
 	if timestamp - RE.ThrottleTimer < 5 then return end
 	if IsInGroup(_G.LE_PARTY_CATEGORY_HOME) or IsInRaid(_G.LE_PARTY_CATEGORY_HOME) then
 		COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "RAID")
@@ -720,7 +720,7 @@ function RE:GetShortMapName(mapID)
 end
 
 function RE:GetShortTime(dbTime)
-	local rawTime = time(date('!*t', GetServerTime())) - dbTime + 1
+	local rawTime = time(date("!*t", GetServerTime())) - dbTime + 1
 	if rawTime < 60 then
 		return "<1 Min"
 	else
