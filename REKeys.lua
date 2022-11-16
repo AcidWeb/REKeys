@@ -22,9 +22,9 @@ local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
 local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
 local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeystoneLevel
 local GetSecondsUntilWeeklyReset = _G.C_DateAndTime.GetSecondsUntilWeeklyReset
-local GetContainerNumSlots = _G.GetContainerNumSlots
-local GetContainerItemID = _G.GetContainerItemID
-local GetContainerItemLink = _G.GetContainerItemLink
+local GetContainerNumSlots = _G.C_Container.GetContainerNumSlots
+local GetContainerItemID = _G.C_Container.GetContainerItemID
+local GetContainerItemLink = _G.C_Container.GetContainerItemLink
 local GetFriendAccountInfo = _G.C_BattleNet.GetFriendAccountInfo
 local RequestLeaders = _G.C_ChallengeMode.RequestLeaders
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
@@ -251,7 +251,6 @@ function RE:OnEvent(self, event, name, ...)
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
 				end
 			elseif button == "RightButton" then
-				_G.SettingsPanel:Show()
 				_G.SettingsPanel:OpenToCategory("REKeys")
 			end
 		end
@@ -428,7 +427,7 @@ function RE:FindKey(dungeonCompleted)
 		local isMain = RE.Settings.GUID == UnitGUID("player") and 1 or 0
 		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
 		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date("!*t", GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.GUID, isMain, RE.BestRun}
-		if dungeonCompleted and IsInGroup() then
+		if dungeonCompleted and IsInGroup() and not IsInRaid() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..RE:GetKeystoneLink(), "PARTY")
 		end
 		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
