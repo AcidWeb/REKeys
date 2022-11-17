@@ -214,7 +214,7 @@ function RE:OnEvent(self, event, name, ...)
 			if RE.Outdated then
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
 				if ElvUI then
-					RE.Tooltip:SetTemplate("Transparent", nil, true)
+					--RE.Tooltip:SetTemplate("Transparent", nil, true)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
 					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 				end
@@ -225,7 +225,7 @@ function RE:OnEvent(self, event, name, ...)
 			else
 				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 				if ElvUI then
-					RE.Tooltip:SetTemplate("Transparent", nil, true)
+					--RE.Tooltip:SetTemplate("Transparent", nil, true)
 					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
 					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 				end
