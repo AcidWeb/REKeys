@@ -23,8 +23,7 @@ local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
 local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeystoneLevel
 local GetSecondsUntilWeeklyReset = _G.C_DateAndTime.GetSecondsUntilWeeklyReset
 local GetContainerNumSlots = _G.C_Container.GetContainerNumSlots
-local GetContainerItemID = _G.C_Container.GetContainerItemID
-local GetContainerItemLink = _G.C_Container.GetContainerItemLink
+local GetContainerItemInfo = _G.C_Container.GetContainerItemInfo
 local GetFriendAccountInfo = _G.C_BattleNet.GetFriendAccountInfo
 local RequestLeaders = _G.C_ChallengeMode.RequestLeaders
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
@@ -692,9 +691,11 @@ function RE:GetKeystoneLink()
 	for bag = 0, _G.NUM_BAG_SLOTS do
 		local bagSlots = GetContainerNumSlots(bag)
 		for slot = 1, bagSlots do
-			local itemID = GetContainerItemID(bag, slot)
-			if itemID and IsItemKeystoneByID(itemID) then
-				keyLink = GetContainerItemLink(bag, slot)
+			local info = GetContainerItemInfo(bag, slot)
+			local itemID = info and info.itemID
+            local hyperLink = info and info.hyperlink
+			if itemID and IsItemKeystoneByID(itemID) and hyperLink then
+				keyLink = hyperLink
 				break
 			end
 		end
