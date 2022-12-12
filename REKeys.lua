@@ -64,7 +64,7 @@ RE.OverrideNames = {}
 _G.SLASH_REKEYS1 = "/rekeys"
 _G.SLASH_REKEYS2 = "/rk"
 
-RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["PinList"] = {}, ["FullDungeonName"] = false, ["ResetTimestamp"] = 0, ["ChatQuery"] = true, ["MinimapButtonSettings"] = {["hide"] = true}, ["AKSupport"] = true}
+RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["PinList"] = {}, ["FullDungeonName"] = false, ["ResetTimestamp"] = 0, ["ChatQuery"] = true, ["MinimapButtonSettings"] = {["hide"] = true}, ["AKSupport"] = true, ["AKWeek"] = 0}
 RE.AceConfig = {
 	type = "group",
 	args = {
@@ -195,6 +195,7 @@ function RE:OnEvent(self, event, name, ...)
 				RE.Settings.MyKeys = {}
 				RE.BestRun = 0
 				RE.Settings.CurrentWeek = 0
+				RE.Settings.AKWeek = 0
 				break
 			end
 		end
@@ -355,10 +356,14 @@ function RE:OnAddonMessageAK(msg, channel)
 		end
 		if #payload > 0 then
 			for _, data in pairs(payload) do
-				local name, class, dungeonID, keyLevel, weeklyBest = strsplit(":", data)
+				local name, class, dungeonID, keyLevel, weeklyBest, akWeek = strsplit(":", data)
 				dungeonID = tonumber(dungeonID)
 				keyLevel = tonumber(keyLevel)
 				weeklyBest = tonumber(weeklyBest)
+				akWeek = tonumber(akWeek)
+				if akWeek and (RE.Settings.AKWeek == 0 or RE.Settings.AKWeek < akWeek) then
+					RE.Settings.AKWeek = akWeek
+				end
 				if name and name ~= RE.MyFullName and class and dungeonID and keyLevel and weeklyBest then
 					if not RE.DB[name] then RE.DB[name] = {} end
 					RE.DB[name] = {RE.DataVersion, time(date("!*t", GetServerTime())), class, dungeonID, keyLevel, "AK-"..math.random(1, 10000000), 1, weeklyBest}
@@ -393,13 +398,14 @@ function RE:FindKey(dungeonCompleted)
 			RE.Settings.MyKeys = {}
 			RE.BestRun = 0
 			RE.Settings.CurrentWeek = 0
+			RE.Settings.AKWeek = 0
 			wipe(RE.DB)
 		end
 		RE.Settings.ResetTimestamp = resetTimestamp
 	end
 	if RE.Settings.CurrentWeek == 0 then
 		local currentAffixes = GetCurrentAffixes()
-		if currentAffixes then
+		if currentAffixes and #currentAffixes ~= 0 then
 			for i, affixes in ipairs(RE.AffixSchedule) do
 				if currentAffixes[1].id == affixes[1] and currentAffixes[2].id == affixes[2] and currentAffixes[3].id == affixes[3] then
 					RE.Settings.CurrentWeek = i
@@ -432,6 +438,8 @@ function RE:FindKey(dungeonCompleted)
 		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
 
 		if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then RE:FillTooltip() end
+
+		RE:SendAKPayloadToGuild()
 	end
 end
 
@@ -447,6 +455,7 @@ function RE:RequestKeys()
 	if IsInGuild() then
 		COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "GUILD")
 		COMM:SendCommMessage("AstralKeys", "request", "GUILD")
+		RE:SendAKPayloadToGuild()
 	end
 
 	for i = 1, GetNumFriends() do
@@ -686,6 +695,16 @@ end
 
 -- Support functions
 
+function RE:SendAKPayloadToGuild()
+	if RE.Settings.AKSupport then
+		local data = RE.Settings.MyKeys[RE.MyFullName]
+		if data and RE.Settings.AKWeek > 0 and IsInGuild() then
+			local payload = "updateV8 "..RE.MyFullName..":"..data.Class..":"..data.DungeonID..":"..data.DungeonLevel..":"..data.BestRun..":"..RE.Settings.AKWeek..":"..RE.Factions[RE.MyFaction] - 1
+			COMM:SendCommMessage("AstralKeys", payload, "GUILD")
+		end
+	end
+end
+
 function RE:GetKeystoneLink()
 	local keyLink = ""
 	for bag = 0, _G.NUM_BAG_SLOTS do
@@ -739,7 +758,7 @@ end
 
 function RE:GetPrefixes()
 	local currentAffixes = GetCurrentAffixes()
-	if currentAffixes then
+	if currentAffixes and #currentAffixes ~= 0 then
 		if #currentAffixes == 4 then
 			local bestRuns = RE:GetParsedBestRun()
 			local leftPanel = "[|cffff0000-|r]"
@@ -871,6 +890,7 @@ function RE:KeySearchDelay()
 		RequestCurrentAffixes()
 	end
 	RE:FindKey()
+	RE:RequestKeys()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
