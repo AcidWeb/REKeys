@@ -47,7 +47,7 @@ local SecondsToTime = _G.SecondsToTime
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 17
+RE.DataVersion = 18
 RE.ThrottleTimer = 0
 RE.BestRun = 0
 RE.Outdated = false
@@ -118,44 +118,48 @@ RE.AceConfig = {
 	}
 }
 RE.AffixSchedule = {
-	{9, 122, 14},
-	{10, 8, 12},
-	{9, 7, 13},
-	{10, 11, 124},
-	{9, 6, 3},
-	{10, 122, 12},
-	{9, 123,  4},
-	{10, 7, 14},
-	{9, 8, 124},
-	{10, 6, 13},
-	{9, 11, 3},
-	{10, 123,  4}
+	{10, 6, 14},
+	{9, 11, 12},
+	{10, 8, 3},
+	{9, 6, 124},
+	{10, 123, 12},
+	{9, 8, 13},
+	{10, 7, 124},
+	{9, 123, 14},
+	{10, 11, 13},
+	{9, 7, 3}
 }
 RE.DungeonNames = {
-	[169] = "ID",
-	[166] = "GD",
-	[227] = "LOWR",
-	[234] = "UPPR",
-	[370] = "WORK",
-	[369] = "YARD",
-	[391] = "STRT",
-	[392] = "GMBT"
+	[2] = "TJS",
+	[165] = "SBG",
+	[200] = "HOV",
+	[210] = "COS",
+	[399] = "RLP",
+	[400] = "NO",
+	[401] = "AV",
+	[402] = "AA"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
-	[2] = "FFEB1300",
-	[3] = "FFD72700",
-	[4] = "FFC43A00",
-	[5] = "FFB04E00",
-	[6] = "FF9C6200",
-	[7] = "FF897500",
-	[8] = "FF758900",
-	[9] = "FF629C00",
-	[10] = "FF4EB000",
-	[11] = "FF3AC400",
-	[12] = "FF27D700",
-	[13] = "FF13EB00",
-	[14] = "FF00FF00"
+	[2] = "FFFF2C00",
+	[3] = "FFFE4200",
+	[4] = "FFFC5300",
+	[5] = "FFF86300",
+	[6] = "FFF47000",
+	[7] = "FFEF7E00",
+	[8] = "FFE98A00",
+	[9] = "FFE39600",
+	[10] = "FFDBA100",
+	[11] = "FFD2AC00",
+	[12] = "FFC8B600",
+	[13] = "FFBEC000",
+	[14] = "FFB2CA00",
+	[15] = "FFA4D400",
+	[16] = "FF95DD00",
+	[17] = "FF83E600",
+	[18] = "FF6DEE00",
+	[19] = "FF4EF700",
+	[20] = "FF00FF00"
 }
 RE.Factions = {
 	["Alliance"] = 1,
@@ -833,8 +837,8 @@ function RE:GetBestRunString(bestRun)
 end
 
 function RE:GetKeystoneLevelColor(level)
-	if level > 14 then
-		return RE.RewardColors[14]
+	if level > 20 then
+		return RE.RewardColors[20]
 	else
 		return RE.RewardColors[level]
 	end
