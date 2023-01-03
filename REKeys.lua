@@ -1,19 +1,19 @@
 local _G = _G
 local _, RE = ...
 local LDB = LibStub("LibDataBroker-1.1")
+local LOR = LibStub("LibOpenRaid-1.0")
 local LDBI = LibStub("LibDBIcon-1.0")
 local QTIP = LibStub("LibQTip-1.0")
 local BUCKET = LibStub("AceBucket-3.0")
-local COMM = LibStub("AceComm-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
 _G.REKeys = RE
 
-local strsplit, pairs, ipairs, select, sformat, strfind, strtrim, time, date, tonumber, wipe, sort, tinsert, next, print, unpack, tContains, tSort = _G.strsplit, _G.pairs, _G.ipairs, _G.select, _G.string.format, _G.strfind, _G.strtrim, _G.time, _G.date, _G.tonumber, _G.wipe, _G.sort, _G.tinsert, _G.next, _G.print, _G.unpack, _G.tContains, _G.table.sort
+local LoadAddOn = _G.LoadAddOn
 local CreateFont = _G.CreateFont
-local SendChatMessage = _G.SendChatMessage
 local GetServerTime = _G.GetServerTime
-local GetNumFriends = _G.C_FriendList.GetNumFriends
-local GetFriendInfoByIndex = _G.C_FriendList.GetFriendInfoByIndex
+local SendChatMessage = _G.SendChatMessage
+local GuildRoster = _G.C_GuildInfo.GuildRoster
+local GetClassInfo = _G.C_CreatureInfo.GetClassInfo
 local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
 local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
 local GetRunHistory = _G.C_MythicPlus.GetRunHistory
@@ -24,96 +24,104 @@ local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeysto
 local GetSecondsUntilWeeklyReset = _G.C_DateAndTime.GetSecondsUntilWeeklyReset
 local GetContainerNumSlots = _G.C_Container.GetContainerNumSlots
 local GetContainerItemInfo = _G.C_Container.GetContainerItemInfo
-local GetFriendAccountInfo = _G.C_BattleNet.GetFriendAccountInfo
 local RequestLeaders = _G.C_ChallengeMode.RequestLeaders
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
 local RequestRewards = _G.C_MythicPlus.RequestRewards
 local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
-local BNGetNumFriends = _G.BNGetNumFriends
-local UnitFullName = _G.UnitFullName
-local UnitClass = _G.UnitClass
-local UnitFactionGroup = _G.UnitFactionGroup
-local UnitExists = _G.UnitExists
-local UnitGUID = _G.UnitGUID
 local IsItemKeystoneByID = _G.C_Item.IsItemKeystoneByID
-local IsQuestBounty = _G.C_QuestLog.IsQuestBounty
 local IsInGroup = _G.IsInGroup
-local IsInGuild = _G.IsInGuild
 local IsInRaid = _G.IsInRaid
 local IsPartyLFG = _G.IsPartyLFG
-local IsShiftKeyDown = _G.IsShiftKeyDown
-local Timer = _G.C_Timer
-local SecondsToTime = _G.SecondsToTime
+local After = _G.C_Timer.After
+local NewTimer = _G.C_Timer.NewTimer
+local NewTicker = _G.C_Timer.NewTicker
+local UnitInParty = _G.UnitInParty
+local UnitInRaid = _G.UnitInRaid
+local UnitFactionGroup = _G.UnitFactionGroup
 local ElvUI = _G.ElvUI
 local RaiderIO = _G.RaiderIO
 
-RE.DataVersion = 18
-RE.ThrottleTimer = 0
-RE.BestRun = 0
-RE.Outdated = false
-RE.Fill = true
-RE.MPlusDataReceived = false
+RE.Keystone = {["MapID"] = 0, ["Level"] = 0}
+RE.RowFill = true
 RE.KeyQueryLimit = false
-RE.ThrottleTable = {}
-RE.PartyCheck = {}
-RE.PartyNames = {}
-RE.PinnedNames = {}
-RE.MainNames = {}
-RE.AltNames = {}
-RE.OverrideNames = {}
-_G.SLASH_REKEYS1 = "/rekeys"
-_G.SLASH_REKEYS2 = "/rk"
+RE.MPlusDataReceived = false
+RE.GroupFound = false
+RE.TooltipDirty = false
 
-RE.DefaultSettings = {["MyKeys"] = {}, ["CurrentWeek"] = 0, ["PinList"] = {}, ["FullDungeonName"] = false, ["ResetTimestamp"] = 0, ["ChatQuery"] = true, ["MinimapButtonSettings"] = {["hide"] = true}, ["AKSupport"] = true, ["AKWeek"] = 0}
+RE.DefaultSettings = {["CurrentWeek"] = 0, ["ResetTimestamp"] = 0, ["ServerTimestamp"] = 0, ["PinnedCharacters"] = {}, ["Sorting"] = 1, ["FullDungeonName"] = false, ["ChatQuery"] = true, ["OfflinePlayers"] = false, ["MinimapButtonSettings"] = {["hide"] = false}}
 RE.AceConfig = {
 	type = "group",
 	args = {
-		dungeonname = {
-			name = L["Don't shorten dungeon names"],
-			desc = L["When checked tooltip will display full dungeon name."],
+		offline = {
+			name = L["Display offline players"],
 			type = "toggle",
 			width = "full",
 			order = 1,
-			set = function(_, val) RE.Settings.FullDungeonName = val end,
-			get = function(_) return RE.Settings.FullDungeonName end
-		},
-		chatquery = {
-			name = L["Respond to !keys query"],
-			type = "toggle",
-			width = "full",
-			order = 2,
-			set = function(_, val) RE.Settings.ChatQuery = val end,
-			get = function(_) return RE.Settings.ChatQuery end
-		},
-		aksupport = {
-			name = L["Get data from Astral Keys users"],
-			type = "toggle",
-			width = "full",
-			order = 3,
-			set = function(_, val) RE.Settings.AKSupport = val end,
-			get = function(_) return RE.Settings.AKSupport end
+			set = function(_, val) RE.Settings.OfflinePlayers = val end,
+			get = function(_) return RE.Settings.OfflinePlayers end
 		},
 		minimap = {
 			name = L["Display minimap button"],
 			type = "toggle",
 			width = "full",
-			order = 4,
+			order = 2,
 			set = function(_, val) RE.Settings.MinimapButtonSettings.hide = not val; if RE.Settings.MinimapButtonSettings.hide then LDBI:Hide("REKeys") else LDBI:Show("REKeys") end end,
 			get = function(_) return not RE.Settings.MinimapButtonSettings.hide end
 		},
-		setmain = {
-			name = L["Set current character as the main one"],
-			type = "execute",
+		chatquery = {
+			name = L["Respond to !keys query"],
+			type = "toggle",
+			width = "full",
+			order = 3,
+			set = function(_, val) RE.Settings.ChatQuery = val end,
+			get = function(_) return RE.Settings.ChatQuery end
+		},
+		dungeonname = {
+			name = L["Don't shorten dungeon names"],
+			desc = L["When checked tooltip will display full dungeon name."],
+			type = "toggle",
+			width = "full",
+			order = 4,
+			set = function(_, val) RE.Settings.FullDungeonName = val end,
+			get = function(_) return RE.Settings.FullDungeonName end
+		},
+		sorting = {
+			name = _G.BAG_FILTER_TITLE_SORTING,
+			type = "select",
 			width = "double",
 			order = 5,
-			func = function(_) RE:UpdateMain() end
+			values = {
+				[1] = _G.CALENDAR_EVENT_NAME,
+				[2] = _G.RATING,
+				[3] = _G.CHALLENGES
+			},
+			set = function(_, val) RE.Settings.Sorting = val end,
+			get = function(_) return RE.Settings.Sorting end
 		},
-		pinlist = {
+		pinned = {
 			name = L["Pinned characters"],
-			type = "multiselect",
+			desc = L["Comma-separated list of character names. They will be shown at the top of the list regardless of status."],
+			type = "input",
+			width = "double",
 			order = 6,
-			get = function(_, player) if RE.Settings.PinList[player] then return true else return false end end,
-			set = function(_, player, state) if not state then RE.Settings.PinList[player] = nil else RE.Settings.PinList[player] = true end end,
+			set = function(_, val)
+				RE.Settings.PinnedCharacters = {}
+				local input = {strsplit(",", val)}
+				for i = 1, #input do
+					local payload = strtrim(input[i])
+					if payload ~= "" then
+						RE.Settings.PinnedCharacters[payload] = true
+					end
+				end
+			end,
+			get = function(_)
+				local output = {}
+				for k, _ in pairs(RE.Settings.PinnedCharacters) do
+					table.insert(output, k)
+				end
+				sort(output)
+				return table.concat(output, ",")
+			end
 		}
 	}
 }
@@ -166,6 +174,57 @@ RE.Factions = {
 	["Horde"] = 2,
 }
 
+local function OrderedNext(t, n)
+	local key = t[t.__next]
+	if not key then return end
+	t.__next = t.__next + 1
+	return key, t.__source[key]
+end
+
+local function OrderedCompare(a, b)
+	local gA = RE.DB[a].Group
+	local gB = RE.DB[b].Group
+	local pA = RE.Settings.PinnedCharacters[a]
+	local pB = RE.Settings.PinnedCharacters[b]
+	if pA and not pB then
+		return true
+	elseif not pA and pB then
+		return false
+	else
+		if gA and not gB then
+			return true
+		elseif not gA and gB then
+			return false
+		end
+	end
+	if RE.Settings.Sorting == 1 then
+		return a < b
+	elseif RE.Settings.Sorting == 2 then
+		local sA = RE.DB[a].Rating
+		local sB = RE.DB[b].Rating
+		return sA > sB
+	elseif RE.Settings.Sorting == 3 then
+		local kA = RE.DB[a].MapID
+		local kB = RE.DB[b].MapID
+		local lA = RE.DB[a].Level
+		local lB = RE.DB[b].Level
+		if kA == kB then
+			return lA > lB
+		else
+			return kA > kB
+		end
+	end
+end
+
+local function OrderedPairs(t, f)
+	local keys, kn = {__source = t, __next = 1}, 1
+	for k in pairs(t) do
+		keys[kn], kn = k, kn + 1
+	end
+	table.sort(keys, f)
+	return OrderedNext, keys
+end
+
 -- Event functions
 
 function RE:OnLoad(self)
@@ -180,29 +239,17 @@ end
 
 function RE:OnEvent(self, event, name, ...)
 	if event == "ADDON_LOADED" and name == "REKeys" then
-		if not _G.REKeysDB then _G.REKeysDB = {} end
+		if not _G.REKeysDB2 then _G.REKeysDB2 = {} end
 		if not _G.REKeysSettings then _G.REKeysSettings = RE.DefaultSettings end
-		RE.DB = _G.REKeysDB
+		RE.DB = _G.REKeysDB2
 		RE.Settings = _G.REKeysSettings
 		for key, value in pairs(RE.DefaultSettings) do
 			if RE.Settings[key] == nil then
 				RE.Settings[key] = value
 			end
 		end
-		RE.AceConfig.args.pinlist.values = RE.GetPinList
 		_G.LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("REKeys", RE.AceConfig)
 		RE.OptionsMenu = _G.LibStub("AceConfigDialog-3.0"):AddToBlizOptions("REKeys", "REKeys")
-
-		for _, data in pairs(RE.DB) do
-			if data[1] ~= RE.DataVersion then
-				wipe(RE.DB)
-				RE.Settings.MyKeys = {}
-				RE.BestRun = 0
-				RE.Settings.CurrentWeek = 0
-				RE.Settings.AKWeek = 0
-				break
-			end
-		end
 
 		RE.TooltipHeaderFont = CreateFont("REKeysTooltipHeaderFont")
 		RE.TooltipHeaderFont:CopyFontObject(_G.GameTooltipHeaderText)
@@ -215,41 +262,36 @@ function RE:OnEvent(self, event, name, ...)
 		})
 		function RE.LDB:OnEnter()
 			if RE.LDB.text == "|cFF74D06CRE|rKeys" or not RE.MPlusDataReceived then return end
-			if RE.Outdated then
-				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 1, "CENTER")
-				if ElvUI then
-					--RE.Tooltip:SetTemplate("Transparent", nil, true)
-					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
-					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
-				end
-				RE.Tooltip:SetHeaderFont(_G.Game18Font)
-				RE.Tooltip:AddHeader("|cffff0000"..L["Addon outdated!"].."|r")
-				RE.Tooltip:SetHeaderFont(_G.Game15Font)
-				RE.Tooltip:AddHeader("|cffff0000"..L["Until updated sending and reciving data will be disabled."] .."|r")
-			else
-				RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
-				if ElvUI then
-					--RE.Tooltip:SetTemplate("Transparent", nil, true)
-					local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
-					RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
-				end
-				RE.Tooltip:SetHeaderFont(RE.TooltipHeaderFont)
-				RE:RequestKeys()
-				RE:FillTooltip()
+			RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
+			if ElvUI then
+				local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
+				RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 			end
+			RE.Tooltip:SetAutoHideDelay(0.1, self, function()
+				if RE.TooltipTimer then
+					RE.TooltipTimer:Cancel()
+					RE.TooltipTimer = nil
+				end
+				QTIP:Release(RE.Tooltip)
+				RE.Tooltip = nil
+			end)
+			RE.Tooltip:SetHeaderFont(RE.TooltipHeaderFont)
+			RE:LORSearchStart()
+			RE:FillTooltip()
 			RE.Tooltip:SmartAnchorTo(self)
 			RE.Tooltip:Show()
-		end
-		function RE.LDB:OnLeave()
-			if RE.UpdateTimer and not RE.UpdateTimer:IsCancelled() then
-				RE.UpdateTimer:Cancel()
-				RE.UpdateTimer = nil
-			end
-			QTIP:Release(RE.Tooltip)
-			RE.Tooltip = nil
+			RE.Tooltip:UpdateScrolling()
+			RE.TooltipTimer = NewTicker(3, RE.RefreshTooltip)
 		end
 		function RE.LDB:OnClick(button)
-			if button == "MiddleButton" then
+			if button == "LeftButton" then
+				LoadAddOn("Blizzard_WeeklyRewards")
+				if _G.WeeklyRewardsFrame:IsVisible() then
+					_G.WeeklyRewardsFrame:Hide()
+				else
+					_G.WeeklyRewardsFrame:Show()
+				end
+			elseif button == "MiddleButton" then
 				local keyLink = RE:GetKeystoneLink()
 				if keyLink ~= "" then
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
@@ -260,25 +302,10 @@ function RE:OnEvent(self, event, name, ...)
 		end
 		LDBI:Register("REKeys", RE.LDB, RE.Settings.MinimapButtonSettings)
 
-		_G.SlashCmdList["REKEYS"] = function()
-			if not QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
-				print("|cFF74D06C[REKeys]|r "..L["Collecting keystone data. Please wait 10 seconds."])
-				RE:RequestKeys()
-				Timer.After(10, RE.FillChat)
-			end
-		end
-
-		COMM:RegisterComm("REKeys", RE.OnAddonMessage)
-		COMM:RegisterComm("AstralKeys", RE.OnAddonMessageAK)
 		self:UnregisterEvent("ADDON_LOADED")
 	elseif event == "PLAYER_ENTERING_WORLD" then
-		RE.MyName, RE.MyRealm = UnitFullName("player")
-		RE.MyFullName = RE.MyName.."-"..RE.MyRealm
-		RE.MyFaction = UnitFactionGroup("player")
-		RE.MyClass = select(2, UnitClass("player"))
-		if not RE.Settings.GUID then
-			RE.Settings.GUID = UnitGUID("player")
-		end
+		RE.PlayerRealm = select(2, UnitFullName("player"))
+		RE.PlayerFaction = UnitFactionGroup("player")
 		self:RegisterEvent("MYTHIC_PLUS_CURRENT_AFFIX_UPDATE")
 		RequestMapInfo()
 		RequestCurrentAffixes()
@@ -286,7 +313,7 @@ function RE:OnEvent(self, event, name, ...)
 		for k, _ in pairs(RE.DungeonNames) do
 			RequestLeaders(k)
 		end
-		Timer.After(10, RE.KeySearchDelay)
+		After(10, RE.FindKeyDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
@@ -295,85 +322,15 @@ function RE:OnEvent(self, event, name, ...)
 		for k, _ in pairs(RE.DungeonNames) do
 			RequestLeaders(k)
 		end
-		Timer.After(5, function() RE:FindKey(true) end)
+		After(5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_GUILD" then
 		RE:ParseChat(name, "GUILD")
 	elseif event == "CHAT_MSG_PARTY" or event == "CHAT_MSG_PARTY_LEADER" then
 		RE:ParseChat(name, "PARTY")
 	elseif event == "CHAT_MSG_RAID" or event == "CHAT_MSG_RAID_LEADER" then
 		RE:ParseChat(name, IsPartyLFG() and "INSTANCE_CHAT" or "RAID")
-	elseif event == "MODIFIER_STATE_CHANGED" and strfind(name, "SHIFT") and QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then
-		RE:FillTooltip()
-	elseif event == "QUEST_ACCEPTED" then
-		local questID = ...
-		if questID and IsQuestBounty(questID) then
-			RE.MPlusDataReceived = false
-			RE:FindKey()
-		end
 	elseif event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE" then
 		RE.MPlusDataReceived = true
-	end
-end
-
-function RE:OnAddonMessage(msg, channel, sender)
-	msg = {strsplit(";", msg)}
-	if tonumber(msg[2]) > RE.DataVersion then
-		RE.Outdated = true
-		return
-	end
-	if tonumber(msg[2]) == RE.DataVersion and sender ~= RE.MyFullName then
-		if msg[1] == "KR" and next(RE.Settings.MyKeys) ~= nil then
-			if not RE.ThrottleTable[sender] then RE.ThrottleTable[sender] = 0 end
-			local timestamp = time(date("!*t", GetServerTime()))
-			if timestamp - RE.ThrottleTable[sender] > 30 then
-				RE.ThrottleTable[sender] = timestamp
-				if channel == "PARTY" or channel == "RAID" or channel == "INSTANCE_CHAT" then
-					for name, data in pairs(RE.Settings.MyKeys) do
-						COMM:SendCommMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.GUID..";"..RE.DB[name][7]..";"..data.BestRun..";"..sender, channel)
-					end
-				else
-					for name, data in pairs(RE.Settings.MyKeys) do
-						COMM:SendCommMessage("REKeys", "KD;"..RE.DataVersion..";"..name..";"..data.Class..";"..data.DungeonID..";"..data.DungeonLevel..";"..RE.Settings.GUID..";"..RE.DB[name][7]..";"..data.BestRun, "WHISPER", sender)
-					end
-				end
-			end
-		elseif msg[1] == "KD" then
-			if msg[10] and msg[10] ~= RE.MyFullName then return end
-			if not RE.DB[msg[3]] then RE.DB[msg[3]] = {} end
-			RE.DB[msg[3]] = {RE.DataVersion, time(date("!*t", GetServerTime())), msg[4], tonumber(msg[5]), tonumber(msg[6]), msg[7], tonumber(msg[8]), tonumber(msg[9])}
-			if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated and not (RE.UpdateTimer and not RE.UpdateTimer:IsCancelled()) then
-				RE.UpdateTimer = Timer.NewTimer(2, RE.FillTooltip)
-			end
-		end
-	end
-end
-
-function RE:OnAddonMessageAK(msg, channel)
-	if RE.Settings.AKSupport and channel == "GUILD" then
-		local payload = {}
-		if string.match(msg, "^updateV8") then
-			msg = string.gsub(msg, "updateV8 ", "")
-			payload = {msg}
-		elseif string.match(msg, "^sync5") then
-			msg = strtrim(string.gsub(msg, "sync5 ", ""), "_")
-			payload = {strsplit("_", msg)}
-		end
-		if #payload > 0 then
-			for _, data in pairs(payload) do
-				local name, class, dungeonID, keyLevel, weeklyBest, akWeek = strsplit(":", data)
-				dungeonID = tonumber(dungeonID)
-				keyLevel = tonumber(keyLevel)
-				weeklyBest = tonumber(weeklyBest)
-				akWeek = tonumber(akWeek)
-				if akWeek and (RE.Settings.AKWeek == 0 or RE.Settings.AKWeek < akWeek) then
-					RE.Settings.AKWeek = akWeek
-				end
-				if name and name ~= RE.MyFullName and class and dungeonID and keyLevel and weeklyBest then
-					if not RE.DB[name] then RE.DB[name] = {} end
-					RE.DB[name] = {RE.DataVersion, time(date("!*t", GetServerTime())), class, dungeonID, keyLevel, "AK-"..math.random(1, 10000000), 1, weeklyBest}
-				end
-			end
-		end
 	end
 end
 
@@ -381,28 +338,19 @@ end
 
 function RE:FindKey(dungeonCompleted)
 	local keystone = GetOwnedKeystoneChallengeMapID()
+	local keystoneLevel = GetOwnedKeystoneLevel()
 
 	if not RE.MPlusDataReceived then
 		RequestCurrentAffixes()
-		Timer.After(3, RE.FindKey)
+		After(3, RE.FindKey)
 		return
-	end
-
-	if dungeonCompleted then
-		RE.BestRun = RE:GetBestRun()
-		if RE.Settings.MyKeys[RE.MyFullName] then
-			RE.Settings.MyKeys[RE.MyFullName]["BestRun"] = RE.BestRun
-			RE.DB[RE.MyFullName][8] = RE.BestRun
-		end
 	end
 
 	local resetTimestamp = GetSecondsUntilWeeklyReset()
 	if resetTimestamp then
-		if resetTimestamp > RE.Settings.ResetTimestamp then
-			RE.Settings.MyKeys = {}
-			RE.BestRun = 0
+		if (resetTimestamp > RE.Settings.ResetTimestamp) or (GetServerTime() - RE.Settings.ServerTimestamp > 604800) then
+			RE.Settings.ServerTimestamp = GetServerTime()
 			RE.Settings.CurrentWeek = 0
-			RE.Settings.AKWeek = 0
 			wipe(RE.DB)
 		end
 		RE.Settings.ResetTimestamp = resetTimestamp
@@ -420,112 +368,28 @@ function RE:FindKey(dungeonCompleted)
 	end
 
 	if not keystone then
-		RE.Settings.MyKeys[RE.MyFullName] = nil
-		RE.DB[RE.MyFullName] = nil
 		RE.LDB.text = "|cffe6cc80-|r"
-	else
-		RE.BestRun = RE:GetBestRun()
-		local keystoneLevel = GetOwnedKeystoneLevel()
-		if not RE.Settings.MyKeys[RE.MyFullName] then
-			RE.BestRun = 0
-			RE.Settings.MyKeys[RE.MyFullName] = {}
-		elseif RE.Settings.MyKeys[RE.MyFullName].DungeonID == keystone and RE.Settings.MyKeys[RE.MyFullName].DungeonLevel == keystoneLevel and RE.LDB.text ~= "|cFF74D06CRE|rKeys" then
-			return
-		end
-		if not RE.DB[RE.MyFullName] then RE.DB[RE.MyFullName] = {} end
-		local isMain = RE.Settings.GUID == UnitGUID("player") and 1 or 0
-		RE.Settings.MyKeys[RE.MyFullName] = {["DungeonID"] = tonumber(keystone), ["DungeonLevel"] = tonumber(keystoneLevel), ["Class"] = RE.MyClass, ["BestRun"] = RE.BestRun}
-		RE.DB[RE.MyFullName] = {RE.DataVersion, time(date("!*t", GetServerTime())), RE.MyClass, RE.Settings.MyKeys[RE.MyFullName].DungeonID, RE.Settings.MyKeys[RE.MyFullName].DungeonLevel, RE.Settings.GUID, isMain, RE.BestRun}
+	elseif keystone ~= RE.Keystone.MapID or keystoneLevel ~= RE.Keystone.Level then
+		RE.Keystone.MapID = keystone
+		RE.Keystone.Level = keystoneLevel
 		if dungeonCompleted and IsInGroup() and not IsInRaid() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..RE:GetKeystoneLink(), "PARTY")
 		end
-		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Settings.MyKeys[RE.MyFullName].DungeonID).." +"..RE.Settings.MyKeys[RE.MyFullName].DungeonLevel.."|r"
+		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Keystone.MapID).." +"..RE.Keystone.Level.."|r"
 
-		if QTIP:IsAcquired("REKeysTooltip") and not RE.Outdated then RE:FillTooltip() end
-
-		RE:SendAKPayloadToGuild()
-	end
-end
-
-function RE:RequestKeys()
-	local timestamp = time(date("!*t", GetServerTime()))
-	if timestamp - RE.ThrottleTimer < 5 then return end
-	if IsInGroup(_G.LE_PARTY_CATEGORY_HOME) or IsInRaid(_G.LE_PARTY_CATEGORY_HOME) then
-		COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "RAID")
-	elseif IsInGroup(_G.LE_PARTY_CATEGORY_INSTANCE) and not IsInRaid(_G.LE_PARTY_CATEGORY_INSTANCE) then
-		COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "INSTANCE_CHAT")
-	end
-
-	if IsInGuild() then
-		COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "GUILD")
-		COMM:SendCommMessage("AstralKeys", "request", "GUILD")
-		RE:SendAKPayloadToGuild()
-	end
-
-	for i = 1, GetNumFriends() do
-		local connected, name = GetFriendInfoByIndex(i)
-		if name and connected then
-			if not strfind(name, "-") then
-				name = name.."-"..RE.MyRealm
-			end
-			COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", name)
+		if QTIP:IsAcquired("REKeysTooltip") then
+			RE:FillTooltip()
+			RE.Tooltip:UpdateScrolling()
 		end
-	end
-
-	for i = 1, BNGetNumFriends() do
-		local accountInfo = GetFriendAccountInfo(i)
-		if accountInfo and accountInfo.gameAccountInfo.characterName then
-			if accountInfo.factionName == RE.MyFaction and accountInfo.gameAccountInfo.realmName == RE.MyRealm then
-				COMM:SendCommMessage("REKeys", "KR;"..RE.DataVersion, "WHISPER", accountInfo.gameAccountInfo.characterName.."-"..RE.MyRealm)
-			end
-		end
-	end
-	RE.ThrottleTimer = timestamp
-end
-
-function RE:FillSorting()
-	wipe(RE.PartyCheck)
-	wipe(RE.PartyNames)
-	wipe(RE.PinnedNames)
-	wipe(RE.MainNames)
-	wipe(RE.AltNames)
-	wipe(RE.OverrideNames)
-
-	if IsInGroup() and not IsInRaid() then
-		for i=1, 4 do
-			if UnitExists("party"..i) then
-				local name, realm = UnitFullName("party"..i)
-				if not realm or (realm and realm == "") then realm = RE.MyRealm end
-				RE.PartyCheck[name.."-"..realm] = true
-			end
-		end
-	end
-
-	for name, data in pairs(RE.DB) do
-		if data[7] == 1 then
-			tinsert(RE.MainNames, name)
-		else
-			if RE.Settings.PinList[name] then RE.Settings.PinList[name] = nil end
-			if not RE.AltNames[data[6]] then RE.AltNames[data[6]] = {} end
-			tinsert(RE.AltNames[data[6]], name)
-		end
-		if RE.PartyCheck[name] then
-			tinsert(RE.PartyNames, name)
-		elseif RE.Settings.PinList[name] then
-			tinsert(RE.PinnedNames, name)
-		end
-	end
-
-	sort(RE.PartyNames)
-	sort(RE.PinnedNames)
-	sort(RE.MainNames)
-	for guid, _ in pairs(RE.AltNames) do
-		sort(RE.AltNames[guid])
 	end
 end
 
 function RE:FillTooltip()
 	local row
+	local groupSeparator = false
+	local pinSeparator = false
+	local pinEmpty = next(RE.Settings.PinnedCharacters) == nil
+
 	RE.Tooltip:Clear()
 	RE.Tooltip:SetColumnLayout(5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 	RE.Tooltip:AddLine()
@@ -534,178 +398,103 @@ function RE:FillTooltip()
 	RE.Tooltip:SetCell(1, 3, "", nil, nil, nil, nil, nil, nil, nil, 80)
 	RE.Tooltip:SetCell(1, 4, "", nil, nil, nil, nil, nil, nil, 5, 5)
 	RE.Tooltip:SetCell(1, 5, "", nil, nil, nil, nil, nil, nil, nil, 80)
-	RE:GetPrefixes()
+	RE:GetAffixes()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:AddSeparator()
 	RE.Tooltip:AddLine()
-	RE.Tooltip:SetColumnLayout(5, "LEFT", "CENTER", "LEFT", "CENTER", "RIGHT")
-	RE:FillSorting()
+	RE.Tooltip:SetColumnLayout(6, "LEFT", "CENTER", "LEFT", "CENTER", "LEFT")
 
-	if #RE.PartyNames > 0 then
-		for i = 1, #RE.PartyNames do
-			local name = RE.PartyNames[i]
-			local data = RE.DB[name]
-			if data[7] == 0 then
-				local main = RE:GetMain(data[6])
-				if main then
-					name = main
-					data = RE.DB[name]
-					RE.OverrideNames[name] = true
-				end
+	for name, payload in OrderedPairs(RE.DB, OrderedCompare) do
+		if payload.Fresh or RE.Settings.OfflinePlayers or RE.Settings.PinnedCharacters[name] then
+			if not pinEmpty and not RE.Settings.PinnedCharacters[name] and not pinSeparator then
+				pinSeparator = true
+				RE.Tooltip:AddLine()
+				RE.Tooltip:AddSeparator()
+				RE.Tooltip:AddLine()
+			elseif RE.GroupFound and not payload.Group and not groupSeparator then
+				groupSeparator = true
+				RE.Tooltip:AddLine()
+				RE.Tooltip:AddSeparator()
+				RE.Tooltip:AddLine()
 			end
-			if RaiderIO and IsShiftKeyDown() then
-				row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r"..RE:GetAKStatus(name), nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			else
-				row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r"..RE:GetAKStatus(name), nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			end
-			RE:GetFill(row)
-			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-				for j = 1, #RE.AltNames[data[6]] do
-					local altName = RE.AltNames[data[6]][j]
-					local altData = RE.DB[altName]
-					if RaiderIO and IsShiftKeyDown() then
-						row = RE.Tooltip:AddLine("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, RE:GetRaiderIOScore(altName), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-					else
-						row = RE.Tooltip:AddLine("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-					end
-					RE:GetFill(row)
-				end
-			end
-		end
-		RE.Tooltip:AddLine()
-		RE.Tooltip:AddSeparator()
-		RE.Tooltip:AddLine()
-	end
-
-	if #RE.PinnedNames > 0 then
-		for i = 1, #RE.PinnedNames do
-			local name = RE.PinnedNames[i]
-			if not RE.OverrideNames[name] then
-				local data = RE.DB[name]
-				if RaiderIO and IsShiftKeyDown() then
-					row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-				else
-					row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-				end
-				RE:GetFill(row)
-				if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-					for j = 1, #RE.AltNames[data[6]] do
-						local altName = RE.AltNames[data[6]][j]
-						local altData = RE.DB[altName]
-						if RaiderIO and IsShiftKeyDown() then
-							row = RE.Tooltip:AddLine("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, RE:GetRaiderIOScore(altName), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-						else
-							row = RE.Tooltip:AddLine("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-						end
-						RE:GetFill(row)
-					end
-				end
-			end
-		end
-		RE.Tooltip:AddLine()
-		RE.Tooltip:AddSeparator()
-		RE.Tooltip:AddLine()
-	end
-
-	for i = 1, #RE.MainNames do
-		local name = RE.MainNames[i]
-		if not tContains(RE.PartyNames, name) and not tContains(RE.PinnedNames, name) and not RE.OverrideNames[name] then
-			local data = RE.DB[name]
-			if RaiderIO and IsShiftKeyDown() then
-				row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r"..RE:GetAKStatus(name), nil, RE:GetRaiderIOScore(name), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			else
-				row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r"..RE:GetAKStatus(name), nil, "|cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]), nil, "|cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			end
-			RE:GetFill(row)
-			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-				for j = 1, #RE.AltNames[data[6]] do
-					local altName = RE.AltNames[data[6]][j]
-					local altData = RE.DB[altName]
-					if RaiderIO and IsShiftKeyDown() then
-						row = RE.Tooltip:AddLine("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, RE:GetRaiderIOScore(altName), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-					else
-						row = RE.Tooltip:AddLine("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r", nil, "|cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]), nil, "|cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-					end
-					RE:GetFill(row)
-				end
-			end
+			row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[payload.Class].colorStr..strsplit("-", name).."|r", nil, "|cff"..(payload.Fresh and "e6cc80" or "95761d")..RE:GetShortMapName(payload.MapID).." +"..payload.Level.."|r", nil, RE:GetScore(name, payload.Rating, payload.Faction))
+			RE:GetRowFill(row)
 		end
 	end
 
-	RE.Fill = true
 	RE.Tooltip:AddLine()
+	RE.RowFill = true
 end
 
-function RE:FillChat()
-	RE:FillSorting()
+function RE:LORSearchStart()
+	if not RE.UpdateTimer then
+		GuildRoster()
+		RE.GroupFound = false
+		RE:PurgeDB()
+		RE.UpdateTimer = NewTimer(15, RE.LORSearchStop)
+		LOR.RegisterCallback(RE, "KeystoneUpdate", "LORCallback")
+		LOR.WipeKeystoneData()
+		if IsInRaid() then
+			LOR.RequestKeystoneDataFromRaid()
+		elseif IsInGroup() then
+			LOR.RequestKeystoneDataFromParty()
+		end
+		LOR.RequestKeystoneDataFromGuild()
+	end
+end
 
-	if #RE.PartyNames > 0 then
-		for i = 1, #RE.PartyNames do
-			local name = RE.PartyNames[i]
-			local data = RE.DB[name]
-			if data[7] == 0 then
-				local main = RE:GetMain(data[6])
-				if main then
-					name = main
-					data = RE.DB[name]
-					RE.OverrideNames[name] = true
-				end
-			end
-			print("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r"..RE:GetAKStatus(name).." - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-				for j = 1, #RE.AltNames[data[6]] do
-					local altName = RE.AltNames[data[6]][j]
-					local altData = RE.DB[altName]
-					print("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r - |cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]).." - |cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-				end
+function RE:LORSearchStop()
+	RE.UpdateTimer = nil
+	LOR.UnregisterCallback(RE, "KeystoneUpdate", "LORCallback")
+end
+
+function RE.LORCallback(unitID, keystoneInfo, _)
+	if keystoneInfo.challengeMapID > 0 then
+		if not RE.DB[unitID] then
+			RE.DB[unitID] = {["MapID"] = keystoneInfo.challengeMapID, ["Level"] = keystoneInfo.level, ["Rating"] = keystoneInfo.rating, ["Class"] = GetClassInfo(keystoneInfo.classID).classFile, ["Faction"] = UnitFactionGroup(unitID)}
+		else
+			RE.DB[unitID].MapID = keystoneInfo.challengeMapID
+			RE.DB[unitID].Level = keystoneInfo.level
+			RE.DB[unitID].Rating = keystoneInfo.rating
+		end
+		RE.DB[unitID].Group = UnitInParty(unitID) or (UnitInRaid(unitID) or false)
+		RE.DB[unitID].Fresh = true
+		if RE.DB[unitID].Group and not RE.Settings.PinnedCharacters[unitID] then
+			RE.GroupFound = true
+		end
+		RE.TooltipDirty = true
+	end
+end
+
+function RE:PurgeDB()
+	local guildName = GetGuildInfo("player")
+	local guildMembersNumber = GetNumGuildMembers()
+	local guildMembers = {}
+
+	if guildName then
+		for i = 1, guildMembersNumber do
+			local name = GetGuildRosterInfo(i)
+			if name then
+				guildMembers[name:gsub("%-"..RE.PlayerRealm, "")] = true
 			end
 		end
-		print("----------")
 	end
 
-	if #RE.PinnedNames > 0 then
-		for i = 1, #RE.PinnedNames do
-			local name = RE.PinnedNames[i]
-			if not RE.OverrideNames[name] then
-				local data = RE.DB[name]
-				print("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-				if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-					for j = 1, #RE.AltNames[data[6]] do
-						local altName = RE.AltNames[data[6]][j]
-						local altData = RE.DB[altName]
-						print("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r - |cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]).." - |cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-					end
-				end
-			end
-		end
-		print("----------")
-	end
-
-	for i = 1, #RE.MainNames do
-		local name = RE.MainNames[i]
-		if not tContains(RE.PartyNames, name) and not tContains(RE.PinnedNames, name) and not RE.OverrideNames[name] then
-			local data = RE.DB[name]
-			print("|c".._G.RAID_CLASS_COLORS[data[3]].colorStr..strsplit("-", name).."|r"..RE:GetAKStatus(name).." - |cffe6cc80"..RE:GetShortMapName(data[4]).." +"..data[5].."|r"..RE:GetBestRunString(data[8]).." - |cff9d9d9d"..RE:GetShortTime(data[2]).."|r")
-			if RE.AltNames[data[6]] and #RE.AltNames[data[6]] > 0 then
-				for j = 1, #RE.AltNames[data[6]] do
-					local altName = RE.AltNames[data[6]][j]
-					local altData = RE.DB[altName]
-					print("> |c".._G.RAID_CLASS_COLORS[altData[3]].colorStr..strsplit("-", altName).."|r - |cffe6cc80"..RE:GetShortMapName(altData[4]).." +"..altData[5].."|r"..RE:GetBestRunString(altData[8]).." - |cff9d9d9d"..RE:GetShortTime(altData[2]).."|r")
-				end
-			end
+	for name, _ in pairs(RE.DB) do
+		RE.DB[name].Fresh = false
+		if not guildMembers[name] and not RE.Settings.PinnedCharacters[name] then
+			RE.DB[name] = nil
 		end
 	end
 end
 
 -- Support functions
 
-function RE:SendAKPayloadToGuild()
-	if RE.Settings.AKSupport then
-		local data = RE.Settings.MyKeys[RE.MyFullName]
-		if data and RE.Settings.AKWeek > 0 and IsInGuild() then
-			local payload = "updateV8 "..RE.MyFullName..":"..data.Class..":"..data.DungeonID..":"..data.DungeonLevel..":"..data.BestRun..":"..RE.Settings.AKWeek..":"..RE.Factions[RE.MyFaction] - 1
-			COMM:SendCommMessage("AstralKeys", payload, "GUILD")
-		end
+function RE:RefreshTooltip()
+	if QTIP:IsAcquired("REKeysTooltip") and RE.TooltipDirty then
+		RE.TooltipDirty = false
+		RE:FillTooltip()
+		RE.Tooltip:UpdateScrolling()
 	end
 end
 
@@ -734,33 +523,7 @@ function RE:GetShortMapName(mapID)
 	end
 end
 
-function RE:GetShortTime(dbTime)
-	local rawTime = time(date("!*t", GetServerTime())) - dbTime + 1
-	if rawTime < 60 then
-		return "<1 Min"
-	else
-		return SecondsToTime(rawTime, true)
-	end
-end
-
-function RE:GetPinList()
-	local players = {}
-	local pinList = {}
-	for name, data in pairs(RE.DB) do
-		if RE.Settings.PinList[name] and data[7] == 0 then
-			RE.Settings.PinList[name] = nil
-		elseif data[7] == 1 and not string.match(data[6], "^AK-") then
-			tinsert(players, name)
-		end
-	end
-	sort(players)
-	for i = 1 , #players do
-		pinList[players[i]] = strsplit("-", players[i])
-	end
-	return pinList
-end
-
-function RE:GetPrefixes()
+function RE:GetAffixes()
 	local currentAffixes = GetCurrentAffixes()
 	if currentAffixes and #currentAffixes ~= 0 then
 		if #currentAffixes == 4 then
@@ -793,46 +556,28 @@ function RE:GetPrefixes()
 	end
 end
 
-function RE:GetFill(row)
-	if RE.Fill then
-		RE.Tooltip:SetLineColor(row, 0, 0, 0, 0.35)
-		RE.Fill = false
-	else
-		RE.Fill = true
-	end
-end
-
-function RE:GetBestRun()
-	local runHistory = GetRunHistory()
-	if #runHistory > 0 then
-		tSort(runHistory, function(left, right) return left.level > right.level; end)
-		return tonumber(runHistory[1].level)
-	else
-		return 0
-	end
-end
-
 function RE:GetParsedBestRun()
 	local bestRuns = {0, 0 ,0}
 	local runHistory = GetRunHistory(false, true)
 	if #runHistory > 0 then
-		tSort(runHistory, function(left, right) return left.level > right.level; end)
+		table.sort(runHistory, function(left, right) return left.level > right.level end)
 		bestRuns[1] = runHistory[1].level
 		if #runHistory >= 4 then
 			bestRuns[2] = runHistory[4].level
 		end
-		if #runHistory >= 10 then
-			bestRuns[3] = runHistory[10].level
+		if #runHistory >= 8 then
+			bestRuns[3] = runHistory[8].level
 		end
 	end
 	return bestRuns
 end
 
-function RE:GetBestRunString(bestRun)
-	if bestRun > 1 then
-		return " [+"..bestRun.."]"
+function RE:GetRowFill(row)
+	if RE.RowFill then
+		RE.Tooltip:SetLineColor(row, 0, 0, 0, 0.35)
+		RE.RowFill = false
 	else
-		return ""
+		RE.RowFill = true
 	end
 end
 
@@ -844,81 +589,36 @@ function RE:GetKeystoneLevelColor(level)
 	end
 end
 
-function RE:GetRaiderIOScore(name)
-	local data = RaiderIO.GetProfile(name, RE.Factions[RE.MyFaction])
-	if data and data.mythicKeystoneProfile then
-		local payload = false
-		local previous = false
-		if data.mythicKeystoneProfile.mplusCurrent.score > 0 then
-			payload = data.mythicKeystoneProfile.mplusCurrent
-		elseif data.mythicKeystoneProfile.mplusPrevious.score > 0 then
-			payload = data.mythicKeystoneProfile.mplusPrevious
-			previous = true
-		end
-		if payload then
-			local r, g, b = RaiderIO.GetScoreColor(payload.score)
-			local output = "|cff"..sformat("%02x%02x%02x", r*255, g*255, b*255)..payload.score.."|r "..(previous and "[P] " or "")
-			for _, value in pairs(payload.roles) do
+function RE:GetScore(name, score, faction)
+	if RaiderIO then
+		faction = RE.Factions[faction] or RE.Factions[RE.PlayerFaction]
+		local data = RaiderIO.GetProfile(name, faction)
+		local r, g, b = RaiderIO.GetScoreColor(score)
+		local output = "|cff"..string.format("%02x%02x%02x", r*255, g*255, b*255)..score.."|r "
+		if data and data.mythicKeystoneProfile and data.mythicKeystoneProfile.mplusCurrent then
+			for _, value in pairs(data.mythicKeystoneProfile.mplusCurrent.roles) do
 				if value[1] == "tank" then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:0:19:22:41|t" end
 				if value[1] == "healer" then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:1:20|t" end
 				if value[1] == "dps" then output = output.."|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:22:41|t" end
 			end
-			return output
-		else
-			return "-"
 		end
-	else
-		return "-"
+		return output
 	end
+	return score
 end
 
-function RE:GetMain(guid)
-	for name, data in pairs(RE.DB) do
-		if data[7] == 1 and data[6] == guid then
-			return name
-		end
-	end
-	return false
-end
-
-function RE:GetAKStatus(name)
-	if string.match(RE.DB[name][6], "^AK-") then
-		return " |cff9d9d9d*|r"
-	else
-		return ""
-	end
-end
-
-function RE:KeySearchDelay()
-	if not RE.MPlusDataReceived then
-		RequestCurrentAffixes()
-	end
+function RE:FindKeyDelay()
+	if not RE.MPlusDataReceived then RequestCurrentAffixes() end
 	RE:FindKey()
-	RE:RequestKeys()
 	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-	_G.REKeysFrame:RegisterEvent("QUEST_ACCEPTED")
-	BUCKET:RegisterBucketEvent("BAG_UPDATE", 2, RE.FindKey)
-	if RaiderIO then
-		_G.REKeysFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
-	end
-end
-
-function RE:UpdateMain()
-	local newGUID = UnitGUID("player")
-	for name, _ in pairs(RE.DB) do
-		if RE.DB[name][6] == RE.Settings.GUID then
-			RE.DB[name][6] = newGUID
-			RE.DB[name][7] = name == RE.MyFullName and 1 or 0
-		end
-	end
-	RE.Settings.GUID = newGUID
-	print("|cFF74D06C[REKeys]|r "..L["Current character is now considered as the main one."])
+	BUCKET:RegisterBucketEvent("BAG_UPDATE", 5, RE.FindKey)
+	RE:LORSearchStart()
 end
 
 function RE:ParseChat(msg, channel)
 	if RE.Settings.ChatQuery and not RE.KeyQueryLimit and msg == "!keys" then
 		RE.KeyQueryLimit = true
-		Timer.After(30, function() RE.KeyQueryLimit = false end)
+		After(30, function() RE.KeyQueryLimit = false end)
 		local keyLink = RE:GetKeystoneLink()
 		if keyLink ~= "" then
 			SendChatMessage(keyLink, channel)
