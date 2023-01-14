@@ -24,7 +24,6 @@ local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeysto
 local GetSecondsUntilWeeklyReset = _G.C_DateAndTime.GetSecondsUntilWeeklyReset
 local GetContainerNumSlots = _G.C_Container.GetContainerNumSlots
 local GetContainerItemInfo = _G.C_Container.GetContainerItemInfo
-local RequestLeaders = _G.C_ChallengeMode.RequestLeaders
 local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
 local RequestRewards = _G.C_MythicPlus.RequestRewards
 local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
@@ -318,18 +317,15 @@ function RE:OnEvent(self, event, name, ...)
 		RequestMapInfo()
 		RequestCurrentAffixes()
 		RequestRewards()
-		for k, _ in pairs(RE.DungeonNames) do
-			RequestLeaders(k)
-		end
 		After(10, RE.FindKeyDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CHALLENGE_MODE_COMPLETED" then
 		RequestMapInfo()
-		RequestCurrentAffixes()
 		RequestRewards()
-		for k, _ in pairs(RE.DungeonNames) do
-			RequestLeaders(k)
-		end
+		After(60, function()
+			RequestMapInfo()
+			RequestRewards()
+		end)
 		After(5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_GUILD" then
 		RE:ParseChat(name, "GUILD", RE.Settings.ChatQueryGuild)
