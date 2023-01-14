@@ -48,7 +48,7 @@ RE.MPlusDataReceived = false
 RE.GroupFound = false
 RE.TooltipDirty = false
 
-RE.DefaultSettings = {["CurrentWeek"] = 0, ["ResetTimestamp"] = 0, ["ServerTimestamp"] = 0, ["PinnedCharacters"] = {}, ["Sorting"] = 1, ["FullDungeonName"] = false, ["ChatQuery"] = true, ["OfflinePlayers"] = false, ["MinimapButtonSettings"] = {["hide"] = false}}
+RE.DefaultSettings = {["CurrentWeek"] = 0, ["ResetTimestamp"] = 0, ["ServerTimestamp"] = 0, ["PinnedCharacters"] = {}, ["Sorting"] = 1, ["FullDungeonName"] = false, ["ChatQueryGuild"] = true, ["ChatQueryGroup"] = true, ["OfflinePlayers"] = false, ["MinimapButtonSettings"] = {["hide"] = false}}
 RE.AceConfig = {
 	type = "group",
 	args = {
@@ -68,20 +68,28 @@ RE.AceConfig = {
 			set = function(_, val) RE.Settings.MinimapButtonSettings.hide = not val; if RE.Settings.MinimapButtonSettings.hide then LDBI:Hide("REKeys") else LDBI:Show("REKeys") end end,
 			get = function(_) return not RE.Settings.MinimapButtonSettings.hide end
 		},
-		chatquery = {
-			name = L["Respond to !keys query"],
+		chatqueryguild = {
+			name = L["Respond to !keys queries on the guild chat"],
 			type = "toggle",
 			width = "full",
 			order = 3,
-			set = function(_, val) RE.Settings.ChatQuery = val end,
-			get = function(_) return RE.Settings.ChatQuery end
+			set = function(_, val) RE.Settings.ChatQueryGuild = val end,
+			get = function(_) return RE.Settings.ChatQueryGuild end
+		},
+		chatquerygroup = {
+			name = L["Respond to !keys queries on the group/raid chat"],
+			type = "toggle",
+			width = "full",
+			order = 4,
+			set = function(_, val) RE.Settings.ChatQueryGroup = val end,
+			get = function(_) return RE.Settings.ChatQueryGroup end
 		},
 		dungeonname = {
 			name = L["Don't shorten dungeon names"],
 			desc = L["When checked tooltip will display full dungeon name."],
 			type = "toggle",
 			width = "full",
-			order = 4,
+			order = 5,
 			set = function(_, val) RE.Settings.FullDungeonName = val end,
 			get = function(_) return RE.Settings.FullDungeonName end
 		},
@@ -89,7 +97,7 @@ RE.AceConfig = {
 			name = _G.BAG_FILTER_TITLE_SORTING,
 			type = "select",
 			width = "double",
-			order = 5,
+			order = 6,
 			values = {
 				[1] = _G.CALENDAR_EVENT_NAME,
 				[2] = _G.RATING,
@@ -103,7 +111,7 @@ RE.AceConfig = {
 			desc = L["Comma-separated list of character names. They will be shown at the top of the list regardless of status."],
 			type = "input",
 			width = "double",
-			order = 6,
+			order = 7,
 			set = function(_, val)
 				RE.Settings.PinnedCharacters = {}
 				local input = {strsplit(",", val)}
@@ -324,11 +332,11 @@ function RE:OnEvent(self, event, name, ...)
 		end
 		After(5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_GUILD" then
-		RE:ParseChat(name, "GUILD")
+		RE:ParseChat(name, "GUILD", RE.Settings.ChatQueryGuild)
 	elseif event == "CHAT_MSG_PARTY" or event == "CHAT_MSG_PARTY_LEADER" then
-		RE:ParseChat(name, "PARTY")
+		RE:ParseChat(name, "PARTY", RE.Settings.ChatQueryGroup)
 	elseif event == "CHAT_MSG_RAID" or event == "CHAT_MSG_RAID_LEADER" then
-		RE:ParseChat(name, IsPartyLFG() and "INSTANCE_CHAT" or "RAID")
+		RE:ParseChat(name, IsPartyLFG() and "INSTANCE_CHAT" or "RAID", RE.Settings.ChatQueryGroup)
 	elseif event == "MYTHIC_PLUS_CURRENT_AFFIX_UPDATE" then
 		RE.MPlusDataReceived = true
 	end
@@ -615,8 +623,8 @@ function RE:FindKeyDelay()
 	RE:LORSearchStart()
 end
 
-function RE:ParseChat(msg, channel)
-	if RE.Settings.ChatQuery and not RE.KeyQueryLimit and msg == "!keys" then
+function RE:ParseChat(msg, channel, respond)
+	if respond and not RE.KeyQueryLimit and msg == "!keys" then
 		RE.KeyQueryLimit = true
 		After(30, function() RE.KeyQueryLimit = false end)
 		local keyLink = RE:GetKeystoneLink()
