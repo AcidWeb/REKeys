@@ -46,6 +46,7 @@ RE.KeyQueryLimit = false
 RE.MPlusDataReceived = false
 RE.GroupFound = false
 RE.TooltipDirty = false
+RE.RewardsDirty = false
 
 RE.DefaultSettings = {["CurrentWeek"] = 0, ["ResetTimestamp"] = 0, ["ServerTimestamp"] = 0, ["PinnedCharacters"] = {}, ["Sorting"] = 1, ["FullDungeonName"] = false, ["ChatQueryGuild"] = true, ["ChatQueryGroup"] = true, ["OfflinePlayers"] = false, ["MinimapButtonSettings"] = {["hide"] = false}}
 RE.AceConfig = {
@@ -237,6 +238,7 @@ end
 function RE:OnLoad(self)
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self:RegisterEvent("CHAT_MSG_GUILD")
 	self:RegisterEvent("CHAT_MSG_PARTY")
 	self:RegisterEvent("CHAT_MSG_PARTY_LEADER")
@@ -319,13 +321,14 @@ function RE:OnEvent(self, event, name, ...)
 		RequestRewards()
 		After(10, RE.FindKeyDelay)
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-	elseif event == "CHALLENGE_MODE_COMPLETED" then
+	elseif event == "ZONE_CHANGED_NEW_AREA" and RE.RewardsDirty then
+		RE.RewardsDirty = false
 		RequestMapInfo()
 		RequestRewards()
-		After(60, function()
-			RequestMapInfo()
-			RequestRewards()
-		end)
+	elseif event == "CHALLENGE_MODE_COMPLETED" then
+		RE.RewardsDirty = true
+		RequestMapInfo()
+		RequestRewards()
 		After(5, function() RE:FindKey(true) end)
 	elseif event == "CHAT_MSG_GUILD" then
 		RE:ParseChat(name, "GUILD", RE.Settings.ChatQueryGuild)
@@ -427,6 +430,7 @@ function RE:FillTooltip()
 	end
 
 	RE.Tooltip:AddLine()
+	if pinSeparator or groupSeparator then RE.Tooltip:AddLine() end
 	RE.RowFill = true
 end
 
