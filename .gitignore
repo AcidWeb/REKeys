@@ -1,2 +1,3 @@
-Libs
+Libs/*
+!Libs/LibDeflate
 desktop.ini
