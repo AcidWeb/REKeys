@@ -306,7 +306,7 @@ function RE:OnEvent(self, event, name, ...)
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
 				end
 			elseif button == "RightButton" then
-				_G.SettingsPanel:OpenToCategory("REKeys")
+				_G.Settings.OpenToCategory("REKeys")
 			end
 		end
 		LDBI:Register("REKeys", RE.LDB, RE.Settings.MinimapButtonSettings)
