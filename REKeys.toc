@@ -1,10 +1,13 @@
-## Interface: 100007
+## Interface: 100100
 ## Title: |cFF74D06CRE|rKeys
 ## Notes: Collect information about keystones owned by your friends.
-## Version: 2.0.4
+## Version: 2.1.0
 ## Author: AcidWeb
 ## SavedVariables: REKeysSettings, REKeysDB2
 ## OptionalDeps: RaiderIO
+## AddonCompartmentFunc: REKeys_CompartmentOnClick
+## AddonCompartmentFuncOnEnter: REKeys_CompartmentOnEnter
+## IconTexture: Interface\AddOns\REKeys\RELogo
 ## X-WoWI-ID: 24510
 ## X-Wago-ID: XrNke8Ka
 

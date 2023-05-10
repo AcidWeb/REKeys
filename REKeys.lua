@@ -133,27 +133,19 @@ RE.AceConfig = {
 		}
 	}
 }
+-- TODO DF Season 2
 RE.AffixSchedule = {
-	{10, 6, 14},
-	{9, 11, 12},
-	{10, 8, 3},
-	{9, 6, 124},
-	{10, 123, 12},
-	{9, 8, 13},
-	{10, 7, 124},
-	{9, 123, 14},
-	{10, 11, 13},
-	{9, 7, 3}
+	{9, 124, 6}
 }
 RE.DungeonNames = {
-	[2] = "TJS",
-	[165] = "SBG",
-	[200] = "HOV",
-	[210] = "COS",
-	[399] = "RLP",
-	[400] = "NO",
-	[401] = "AV",
-	[402] = "AA"
+	[438] = "VP",
+	[206] = "NL",
+	[245] = "FH",
+	[251] = "UNDR",
+	[403] = "ULD",
+	[404] = "NELT",
+	[405] = "BH",
+	[406] = "HOI"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
@@ -269,14 +261,14 @@ function RE:OnEvent(self, event, name, ...)
 			text = "|cFF74D06CRE|rKeys",
 			icon = "Interface\\Icons\\INV_Relics_Hourglass",
 		})
-		function RE.LDB:OnEnter()
+		function RE.LDB:OnEnter(frame)
 			if RE.LDB.text == "|cFF74D06CRE|rKeys" or not RE.MPlusDataReceived then return end
 			RE.Tooltip = QTIP:Acquire("REKeysTooltip", 5, "CENTER", "CENTER", "CENTER", "CENTER", "CENTER")
 			if ElvUI then
 				local red, green, blue = unpack(ElvUI[1].media.backdropfadecolor)
 				RE.Tooltip:SetBackdropColor(red, green, blue, ElvUI[1].Tooltip and ElvUI[1].Tooltip.db.colorAlpha or 1)
 			end
-			RE.Tooltip:SetAutoHideDelay(0.1, self, function()
+			RE.Tooltip:SetAutoHideDelay(0.1, frame or self, function()
 				if RE.TooltipTimer then
 					RE.TooltipTimer:Cancel()
 					RE.TooltipTimer = nil
@@ -287,7 +279,7 @@ function RE:OnEvent(self, event, name, ...)
 			RE.Tooltip:SetHeaderFont(RE.TooltipHeaderFont)
 			RE:LORSearchStart()
 			RE:FillTooltip()
-			RE.Tooltip:SmartAnchorTo(self)
+			RE.Tooltip:SmartAnchorTo(frame or self)
 			RE.Tooltip:Show()
 			RE.Tooltip:UpdateScrolling()
 			RE.TooltipTimer = NewTicker(3, RE.RefreshTooltip)
@@ -395,6 +387,7 @@ function RE:FillTooltip()
 	local row
 	local groupSeparator = false
 	local pinSeparator = false
+	local pinExist = false
 	local pinEmpty = next(RE.Settings.PinnedCharacters) == nil
 
 	RE.Tooltip:Clear()
@@ -413,7 +406,10 @@ function RE:FillTooltip()
 
 	for name, payload in OrderedPairs(RE.DB, OrderedCompare) do
 		if payload.Fresh or RE.Settings.OfflinePlayers or RE.Settings.PinnedCharacters[name] then
-			if not pinEmpty and not RE.Settings.PinnedCharacters[name] and not pinSeparator then
+			if not pinEmpty and not pinExist and RE.Settings.PinnedCharacters[name] then
+				pinExist = true
+			end
+			if pinExist and not pinEmpty and not RE.Settings.PinnedCharacters[name] and not pinSeparator then
 				pinSeparator = true
 				RE.Tooltip:AddLine()
 				RE.Tooltip:AddSeparator()
@@ -526,8 +522,10 @@ end
 function RE:GetShortMapName(mapID)
 	if RE.Settings.FullDungeonName then
 		return GetMapUIInfo(mapID)
-	else
+	elseif RE.DungeonNames[mapID] then
 		return RE.DungeonNames[mapID]
+	else
+		return '???'
 	end
 end
 
@@ -632,4 +630,12 @@ function RE:ParseChat(msg, channel, respond)
 			SendChatMessage(keyLink, channel)
 		end
 	end
+end
+
+function REKeys_CompartmentOnClick(_, button)
+	RE.LDB:OnClick(button)
+end
+
+function REKeys_CompartmentOnEnter(_, frame)
+	RE.LDB:OnEnter(frame)
 end
