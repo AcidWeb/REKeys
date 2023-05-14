@@ -135,7 +135,7 @@ RE.AceConfig = {
 }
 -- TODO DF Season 2
 RE.AffixSchedule = {
-	{9, 124, 6}
+--	{9, 124, 6},
 }
 RE.DungeonNames = {
 	[438] = "VP",
@@ -402,7 +402,7 @@ function RE:FillTooltip()
 	RE.Tooltip:AddLine()
 	RE.Tooltip:AddSeparator()
 	RE.Tooltip:AddLine()
-	RE.Tooltip:SetColumnLayout(6, "LEFT", "CENTER", "LEFT", "CENTER", "LEFT")
+	RE.Tooltip:SetColumnLayout(5, "LEFT", "CENTER", "LEFT", "CENTER", "LEFT")
 
 	for name, payload in OrderedPairs(RE.DB, OrderedCompare) do
 		if payload.Fresh or RE.Settings.OfflinePlayers or RE.Settings.PinnedCharacters[name] then
@@ -554,7 +554,7 @@ function RE:GetAffixes()
 		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
 		RE.Tooltip:AddLine()
 	end
-	if RE.Settings.CurrentWeek > 0 then
+	if RE.Settings.CurrentWeek > 0 and #RE.AffixSchedule > 1 then
 		local affixes = RE.AffixSchedule[RE.Settings.CurrentWeek % #RE.AffixSchedule + 1]
 		RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[1]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[3]).."|r")
 	else
