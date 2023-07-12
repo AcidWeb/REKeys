@@ -133,9 +133,17 @@ RE.AceConfig = {
 		}
 	}
 }
--- TODO DF Season 2
 RE.AffixSchedule = {
---	{9, 124, 6},
+	{9, 124, 6},
+	{10, 134, 7},
+	{9, 136, 123},
+	{10, 135, 6},
+	{9, 3, 8},
+	{10, 124, 11},
+	{9, 135, 7},
+	{10, 136, 8},
+	{9, 134, 11},
+	{10, 3, 123}
 }
 RE.DungeonNames = {
 	[438] = "VP",
@@ -622,7 +630,7 @@ function RE:FindKeyDelay()
 end
 
 function RE:ParseChat(msg, channel, respond)
-	if respond and not RE.KeyQueryLimit and msg == "!keys" then
+	if respond and not RE.KeyQueryLimit and strlower(msg) == "!keys" then
 		RE.KeyQueryLimit = true
 		After(30, function() RE.KeyQueryLimit = false end)
 		local keyLink = RE:GetKeystoneLink()
