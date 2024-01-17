@@ -48,7 +48,7 @@ RE.GroupFound = false
 RE.TooltipDirty = false
 RE.RewardsDirty = false
 
-RE.DefaultSettings = {["CurrentWeek"] = 0, ["ResetTimestamp"] = 0, ["ServerTimestamp"] = 0, ["PinnedCharacters"] = {}, ["Sorting"] = 1, ["FullDungeonName"] = false, ["ChatQueryGuild"] = true, ["ChatQueryGroup"] = true, ["OfflinePlayers"] = false, ["MinimapButtonSettings"] = {["hide"] = false}}
+RE.DefaultSettings = {["CurrentWeek"] = 0, ["ResetTimestamp"] = 0, ["ServerTimestamp"] = 0, ["PinnedCharacters"] = {}, ["Sorting"] = 1, ["FullDungeonName"] = false, ["ChatQueryGuild"] = true, ["ChatQueryGroup"] = true, ["OfflinePlayers"] = false, ["KeyNotification"] = true, ["MinimapButtonSettings"] = {["hide"] = false}}
 RE.AceConfig = {
 	type = "group",
 	args = {
@@ -93,11 +93,20 @@ RE.AceConfig = {
 			set = function(_, val) RE.Settings.FullDungeonName = val end,
 			get = function(_) return RE.Settings.FullDungeonName end
 		},
+		keynotification = {
+			name = L["Send new key notification"],
+			desc = L["When checked notification to party will be send when the new key is acquired."],
+			type = "toggle",
+			width = "full",
+			order = 6,
+			set = function(_, val) RE.Settings.KeyNotification = val end,
+			get = function(_) return RE.Settings.KeyNotification end
+		},
 		sorting = {
 			name = _G.BAG_FILTER_TITLE_SORTING,
 			type = "select",
 			width = "double",
-			order = 6,
+			order = 7,
 			values = {
 				[1] = _G.CALENDAR_EVENT_NAME,
 				[2] = _G.RATING,
@@ -111,7 +120,7 @@ RE.AceConfig = {
 			desc = L["Comma-separated list of character names. They will be shown at the top of the list regardless of status."],
 			type = "input",
 			width = "double",
-			order = 7,
+			order = 8,
 			set = function(_, val)
 				RE.Settings.PinnedCharacters = {}
 				local input = {strsplit(",", val)}
@@ -379,7 +388,7 @@ function RE:FindKey(dungeonCompleted)
 	elseif keystone ~= RE.Keystone.MapID or keystoneLevel ~= RE.Keystone.Level then
 		RE.Keystone.MapID = keystone
 		RE.Keystone.Level = keystoneLevel
-		if dungeonCompleted and IsInGroup() and not IsInRaid() then
+		if RE.Settings.KeyNotification and dungeonCompleted and IsInGroup() and not IsInRaid() then
 			SendChatMessage("[REKeys] "..L["My new key"]..": "..RE:GetKeystoneLink(), "PARTY")
 		end
 		RE.LDB.text = "|cffe6cc80"..RE:GetShortMapName(RE.Keystone.MapID).." +"..RE.Keystone.Level.."|r"

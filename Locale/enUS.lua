@@ -9,3 +9,5 @@ L["Respond to !keys queries on the group/raid chat"] = true
 L["Display minimap button"] = true
 L["Pinned characters"] = true
 L["Comma-separated list of character names. They will be shown at the top of the list regardless of status."] = true
+L["Send new key notification"] = true
+L["When checked notification to party will be send when the new key is acquired."] = true
