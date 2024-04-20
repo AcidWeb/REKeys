@@ -1,0 +1,21 @@
+{
+	"$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+	"runtime.version": "Lua 5.1",
+	"diagnostics.globals": [
+        "BAG_FILTER_TITLE_SORTING",
+        "CALENDAR_EVENT_NAME",
+        "RATING",
+        "CHALLENGES",
+        "RaiderIO",
+        "ElvUI",
+        "GameTooltipHeaderText",
+        "Settings",
+        "WeeklyRewardsFrame",
+        "REKeysFrame"
+    ],
+    "diagnostics.disable": [
+		"undefined-field",
+        "param-type-mismatch",
+        "redundant-parameter"
+	  ]
+}

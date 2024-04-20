@@ -1,4 +1,3 @@
-local _G = _G
 local _, RE = ...
 local LDB = LibStub("LibDataBroker-1.1")
 local LOR = LibStub("LibOpenRaid-1.0")
@@ -6,39 +5,39 @@ local LDBI = LibStub("LibDBIcon-1.0")
 local QTIP = LibStub("LibQTip-1.0")
 local BUCKET = LibStub("AceBucket-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("REKeys")
-_G.REKeys = RE
+REKeys = RE
 
-local LoadAddOn = _G.LoadAddOn
-local CreateFont = _G.CreateFont
-local GetServerTime = _G.GetServerTime
-local SendChatMessage = _G.SendChatMessage
-local GuildRoster = _G.C_GuildInfo.GuildRoster
-local GetClassInfo = _G.C_CreatureInfo.GetClassInfo
-local GetMapUIInfo = _G.C_ChallengeMode.GetMapUIInfo
-local GetAffixInfo = _G.C_ChallengeMode.GetAffixInfo
-local GetRunHistory = _G.C_MythicPlus.GetRunHistory
-local GetOwnedKeystoneChallengeMapID = _G.C_MythicPlus.GetOwnedKeystoneChallengeMapID
-local GetOwnedKeystoneLevel = _G.C_MythicPlus.GetOwnedKeystoneLevel
-local GetCurrentAffixes = _G.C_MythicPlus.GetCurrentAffixes
-local GetRewardLevelFromKeystoneLevel = _G.C_MythicPlus.GetRewardLevelFromKeystoneLevel
-local GetSecondsUntilWeeklyReset = _G.C_DateAndTime.GetSecondsUntilWeeklyReset
-local GetContainerNumSlots = _G.C_Container.GetContainerNumSlots
-local GetContainerItemInfo = _G.C_Container.GetContainerItemInfo
-local RequestMapInfo = _G.C_MythicPlus.RequestMapInfo
-local RequestRewards = _G.C_MythicPlus.RequestRewards
-local RequestCurrentAffixes = _G.C_MythicPlus.RequestCurrentAffixes
-local IsItemKeystoneByID = _G.C_Item.IsItemKeystoneByID
-local IsInGroup = _G.IsInGroup
-local IsInRaid = _G.IsInRaid
-local IsPartyLFG = _G.IsPartyLFG
-local After = _G.C_Timer.After
-local NewTimer = _G.C_Timer.NewTimer
-local NewTicker = _G.C_Timer.NewTicker
-local UnitInParty = _G.UnitInParty
-local UnitInRaid = _G.UnitInRaid
-local UnitFactionGroup = _G.UnitFactionGroup
-local ElvUI = _G.ElvUI
-local RaiderIO = _G.RaiderIO
+local LoadAddOn = C_AddOns.LoadAddOn
+local CreateFont = CreateFont
+local GetServerTime = GetServerTime
+local SendChatMessage = SendChatMessage
+local GuildRoster = C_GuildInfo.GuildRoster
+local GetClassInfo = C_CreatureInfo.GetClassInfo
+local GetMapUIInfo = C_ChallengeMode.GetMapUIInfo
+local GetAffixInfo = C_ChallengeMode.GetAffixInfo
+local GetRunHistory = C_MythicPlus.GetRunHistory
+local GetOwnedKeystoneChallengeMapID = C_MythicPlus.GetOwnedKeystoneChallengeMapID
+local GetOwnedKeystoneLevel = C_MythicPlus.GetOwnedKeystoneLevel
+local GetCurrentAffixes = C_MythicPlus.GetCurrentAffixes
+local GetRewardLevelFromKeystoneLevel = C_MythicPlus.GetRewardLevelFromKeystoneLevel
+local GetSecondsUntilWeeklyReset = C_DateAndTime.GetSecondsUntilWeeklyReset
+local GetContainerNumSlots = C_Container.GetContainerNumSlots
+local GetContainerItemInfo = C_Container.GetContainerItemInfo
+local RequestMapInfo = C_MythicPlus.RequestMapInfo
+local RequestRewards = C_MythicPlus.RequestRewards
+local RequestCurrentAffixes = C_MythicPlus.RequestCurrentAffixes
+local IsItemKeystoneByID = C_Item.IsItemKeystoneByID
+local IsInGroup = IsInGroup
+local IsInRaid = IsInRaid
+local IsPartyLFG = IsPartyLFG
+local After = C_Timer.After
+local NewTimer = C_Timer.NewTimer
+local NewTicker = C_Timer.NewTicker
+local UnitInParty = UnitInParty
+local UnitInRaid = UnitInRaid
+local UnitFactionGroup = UnitFactionGroup
+local ElvUI = ElvUI
+local RaiderIO = RaiderIO
 
 RE.Keystone = {["MapID"] = 0, ["Level"] = 0}
 RE.RowFill = true
@@ -103,14 +102,14 @@ RE.AceConfig = {
 			get = function(_) return RE.Settings.KeyNotification end
 		},
 		sorting = {
-			name = _G.BAG_FILTER_TITLE_SORTING,
+			name = BAG_FILTER_TITLE_SORTING,
 			type = "select",
 			width = "double",
 			order = 7,
 			values = {
-				[1] = _G.CALENDAR_EVENT_NAME,
-				[2] = _G.RATING,
-				[3] = _G.CHALLENGES
+				[1] = CALENDAR_EVENT_NAME,
+				[2] = RATING,
+				[3] = CHALLENGES
 			},
 			set = function(_, val) RE.Settings.Sorting = val end,
 			get = function(_) return RE.Settings.Sorting end
@@ -257,20 +256,20 @@ end
 
 function RE:OnEvent(self, event, name, ...)
 	if event == "ADDON_LOADED" and name == "REKeys" then
-		if not _G.REKeysDB2 then _G.REKeysDB2 = {} end
-		if not _G.REKeysSettings then _G.REKeysSettings = RE.DefaultSettings end
-		RE.DB = _G.REKeysDB2
-		RE.Settings = _G.REKeysSettings
+		if not REKeysDB2 then REKeysDB2 = {} end
+		if not REKeysSettings then REKeysSettings = RE.DefaultSettings end
+		RE.DB = REKeysDB2
+		RE.Settings = REKeysSettings
 		for key, value in pairs(RE.DefaultSettings) do
 			if RE.Settings[key] == nil then
 				RE.Settings[key] = value
 			end
 		end
-		_G.LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("REKeys", RE.AceConfig)
-		RE.OptionsMenu = _G.LibStub("AceConfigDialog-3.0"):AddToBlizOptions("REKeys", "REKeys")
+		LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("REKeys", RE.AceConfig)
+		RE.OptionsMenu = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("REKeys", "REKeys")
 
 		RE.TooltipHeaderFont = CreateFont("REKeysTooltipHeaderFont")
-		RE.TooltipHeaderFont:CopyFontObject(_G.GameTooltipHeaderText)
+		RE.TooltipHeaderFont:CopyFontObject(GameTooltipHeaderText)
 		RE.TooltipHeaderFont:SetFont(select(1, RE.TooltipHeaderFont:GetFont()), 15, "")
 
 		RE.LDB = LDB:NewDataObject("REKeys", {
@@ -304,10 +303,10 @@ function RE:OnEvent(self, event, name, ...)
 		function RE.LDB:OnClick(button)
 			if button == "LeftButton" then
 				LoadAddOn("Blizzard_WeeklyRewards")
-				if _G.WeeklyRewardsFrame:IsVisible() then
-					_G.WeeklyRewardsFrame:Hide()
+				if WeeklyRewardsFrame:IsVisible() then
+					WeeklyRewardsFrame:Hide()
 				else
-					_G.WeeklyRewardsFrame:Show()
+					WeeklyRewardsFrame:Show()
 				end
 			elseif button == "MiddleButton" then
 				local keyLink = RE:GetKeystoneLink()
@@ -315,7 +314,7 @@ function RE:OnEvent(self, event, name, ...)
 					SendChatMessage(keyLink, IsInGroup() and "PARTY" or "GUILD")
 				end
 			elseif button == "RightButton" then
-				_G.Settings.OpenToCategory("REKeys")
+				Settings.OpenToCategory("REKeys")
 			end
 		end
 		LDBI:Register("REKeys", RE.LDB, RE.Settings.MinimapButtonSettings)
@@ -437,7 +436,7 @@ function RE:FillTooltip()
 				RE.Tooltip:AddSeparator()
 				RE.Tooltip:AddLine()
 			end
-			row = RE.Tooltip:AddLine("|c".._G.RAID_CLASS_COLORS[payload.Class].colorStr..strsplit("-", name).."|r", nil, "|cff"..(payload.Fresh and "e6cc80" or "95761d")..RE:GetShortMapName(payload.MapID).." +"..payload.Level.."|r", nil, RE:GetScore(name, payload.Rating, payload.Faction))
+			row = RE.Tooltip:AddLine("|c"..RAID_CLASS_COLORS[payload.Class].colorStr..strsplit("-", name).."|r", nil, "|cff"..(payload.Fresh and "e6cc80" or "95761d")..RE:GetShortMapName(payload.MapID).." +"..payload.Level.."|r", nil, RE:GetScore(name, payload.Rating, payload.Faction))
 			RE:GetRowFill(row)
 		end
 	end
@@ -521,7 +520,7 @@ end
 
 function RE:GetKeystoneLink()
 	local keyLink = ""
-	for bag = 0, _G.NUM_BAG_SLOTS do
+	for bag = 0, NUM_BAG_SLOTS do
 		local bagSlots = GetContainerNumSlots(bag)
 		for slot = 1, bagSlots do
 			local info = GetContainerItemInfo(bag, slot)
@@ -633,7 +632,7 @@ end
 function RE:FindKeyDelay()
 	if not RE.MPlusDataReceived then RequestCurrentAffixes() end
 	RE:FindKey()
-	_G.REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+	REKeysFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 	BUCKET:RegisterBucketEvent("BAG_UPDATE", 5, RE.FindKey)
 	RE:LORSearchStart()
 end
