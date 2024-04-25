@@ -154,36 +154,26 @@ RE.AffixSchedule = {
 	{10, 3, 123}
 }
 RE.DungeonNames = {
-	[456] = "TOTT",
-	[168] = "EB",
-	[198] = "DHT",
-	[199] = "BRH",
-	[244] = "AD",
-	[248] = "WM",
-	[463] = "FALL",
-	[464] = "RISE"
+	[401] = "AV",
+	[403] = "ULD",
+	[400] = "NO",
+	[405] = "BH",
+	[404] = "NELT",
+	[402] = "AA",
+	[399] = "RLP",
+	[406] = "HOI"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
-	[2] = "FFFF2C00",
-	[3] = "FFFE4200",
-	[4] = "FFFC5300",
-	[5] = "FFF86300",
-	[6] = "FFF47000",
-	[7] = "FFEF7E00",
-	[8] = "FFE98A00",
-	[9] = "FFE39600",
-	[10] = "FFDBA100",
-	[11] = "FFD2AC00",
-	[12] = "FFC8B600",
-	[13] = "FFBEC000",
-	[14] = "FFB2CA00",
-	[15] = "FFA4D400",
-	[16] = "FF95DD00",
-	[17] = "FF83E600",
-	[18] = "FF6DEE00",
-	[19] = "FF4EF700",
-	[20] = "FF00FF00"
+	[2] = "FFE31C00",
+	[3] = "FFC63900",
+	[4] = "FFAA5500",
+	[5] = "FF8E7100",
+	[6] = "FF718E00",
+	[7] = "FF55AA00",
+	[8] = "FF39C600",
+	[9] = "FF1CE300",
+	[10] = "FF00FF00"
 }
 RE.Factions = {
 	["Alliance"] = 1,
@@ -604,8 +594,8 @@ function RE:GetRowFill(row)
 end
 
 function RE:GetKeystoneLevelColor(level)
-	if level > 20 then
-		return RE.RewardColors[20]
+	if level > 10 then
+		return RE.RewardColors[10]
 	else
 		return RE.RewardColors[level]
 	end
