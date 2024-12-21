@@ -142,16 +142,14 @@ RE.AceConfig = {
 	}
 }
 RE.AffixSchedule = {
-	{9, 124, 6},
-	{10, 134, 7},
-	{9, 136, 123},
-	{10, 135, 6},
-	{9, 3, 8},
-	{10, 124, 11},
-	{9, 135, 7},
-	{10, 136, 8},
-	{9, 134, 11},
-	{10, 3, 123}
+	{148, 9},
+	{159, 10},
+	{158, 9},
+	{160, 10},
+	{159, 9},
+	{148, 10},
+	{160, 9},
+	{158, 10}
 }
 RE.DungeonNames = {
 	[507] = "GB",
@@ -364,7 +362,7 @@ function RE:FindKey(dungeonCompleted)
 		local currentAffixes = GetCurrentAffixes()
 		if currentAffixes and #currentAffixes ~= 0 then
 			for i, affixes in ipairs(RE.AffixSchedule) do
-				if currentAffixes[1].id == affixes[1] and currentAffixes[2].id == affixes[2] and currentAffixes[3].id == affixes[3] then
+				if currentAffixes[1].id == affixes[1] and currentAffixes[2].id == affixes[2] then
 					RE.Settings.CurrentWeek = i
 					break
 				end
@@ -538,7 +536,7 @@ end
 function RE:GetAffixes()
 	local currentAffixes = GetCurrentAffixes()
 	if currentAffixes and #currentAffixes ~= 0 then
-		if #currentAffixes == 4 then
+		if #currentAffixes == 5 then
 			local bestRuns = RE:GetParsedBestRun()
 			local leftPanel = "[|cffff0000-|r]"
 			local centerPanel = "[|cffff0000-|r]"
@@ -557,12 +555,13 @@ function RE:GetAffixes()
 			RE.Tooltip:AddSeparator()
 			RE.Tooltip:AddLine()
 		end
-		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
+		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id):gsub(L["Xal'atath's Bargain"]..": ", "").."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[4].id).."|r")
 		RE.Tooltip:AddLine()
 	end
-	if RE.Settings.CurrentWeek > 0 and #RE.AffixSchedule > 1 then
+	if RE.Settings.CurrentWeek > 0 then
 		local affixes = RE.AffixSchedule[RE.Settings.CurrentWeek % #RE.AffixSchedule + 1]
-		RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[1]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[3]).."|r")
+		affixes[3] = affixes[2] == 9 and 10 or 9
+		RE.Tooltip:AddHeader("|cffbbbbbb"..GetAffixInfo(affixes[1]):gsub(L["Xal'atath's Bargain"]..": ", "").."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[2]).."|r", "|cff00ff00|||r", "|cffbbbbbb"..GetAffixInfo(affixes[3]).."|r")
 	else
 		RE.Tooltip:AddHeader("|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb?|r", "|cff00ff00|||r", "|cffbbbbbb?|r")
 	end

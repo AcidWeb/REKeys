@@ -1,7 +1,7 @@
-## Interface: 110005
+## Interface: 110007
 ## Title: |cFF74D06CRE|rKeys
 ## Notes: Collect information about keystones owned by your friends.
-## Version: 2.1.14
+## Version: 2.1.15
 ## Author: AcidWeb
 ## SavedVariables: REKeysSettings, REKeysDB2
 ## OptionalDeps: RaiderIO
