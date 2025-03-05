@@ -1,13 +1,24 @@
-## Interface: 110007
+## Interface: 110100
 ## Title: |cFF74D06CRE|rKeys
 ## Notes: Collect information about keystones owned by your friends.
-## Version: 2.1.15
+## Version: 2.1.16
 ## Author: AcidWeb
 ## SavedVariables: REKeysSettings, REKeysDB2
 ## OptionalDeps: RaiderIO
 ## AddonCompartmentFunc: REKeys_CompartmentOnClick
 ## AddonCompartmentFuncOnEnter: REKeys_CompartmentOnEnter
 ## IconTexture: Interface\AddOns\REKeys\RELogo
+## Category-enUS: Dungeons & Raids
+## Category-deDE: Dungeons & Schlachtzüge
+## Category-esES: Mazmorras y bandas
+## Category-esMX: Calabozos y bandas
+## Category-frFR: Donjons et raids
+## Category-itIT: Spedizioni e incursioni
+## Category-koKR: 던전 및 공격대
+## Category-ptBR: Masmorras e Raides
+## Category-ruRU: Подземелья и рейды
+## Category-zhCN: 地下城和团队副本
+## Category-zhTW: 地城與團隊
 ## X-WoWI-ID: 24510
 ## X-Wago-ID: XrNke8Ka
 

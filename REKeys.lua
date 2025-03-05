@@ -152,14 +152,14 @@ RE.AffixSchedule = {
 	{158, 10}
 }
 RE.DungeonNames = {
-	[507] = "GB",
-	[353] = "SIEGE",
-	[376] = "NW",
-	[375] = "MISTS",
-	[501] = "SV",
-	[505] = "DAWN",
-	[502] = "COT",
-	[503] = "ARAK"
+	[247] = "ML",
+	[382] = "TOP",
+	[504] = "DFC",
+	[500] = "ROOK",
+	[499] = "PSF",
+	[506] = "BREW",
+	[525] = "FLOOD",
+	[370] = "WORK"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
@@ -555,7 +555,7 @@ function RE:GetAffixes()
 			RE.Tooltip:AddSeparator()
 			RE.Tooltip:AddLine()
 		end
-		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id):gsub(L["Xal'atath's Bargain"]..": ", "").."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[4].id).."|r")
+		RE.Tooltip:AddHeader("|cffffffff"..GetAffixInfo(currentAffixes[1].id):gsub(L["Xal'atath's Bargain"]..": ", "").."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[2].id).."|r", "|cffff0000|||r", "|cffffffff"..GetAffixInfo(currentAffixes[3].id).."|r")
 		RE.Tooltip:AddLine()
 	end
 	if RE.Settings.CurrentWeek > 0 then
