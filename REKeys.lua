@@ -152,14 +152,14 @@ RE.AffixSchedule = {
 	{158, 10}
 }
 RE.DungeonNames = {
-	[247] = "ML",
-	[382] = "TOP",
-	[504] = "DFC",
-	[500] = "ROOK",
+	[378] = "HOA",
 	[499] = "PSF",
-	[506] = "BREW",
+	[505] = "DAWN",
+	[503] = "ARAK",
 	[525] = "FLOOD",
-	[370] = "WORK"
+	[542] = "EDA",
+	[391] = "STRT",
+	[392] = "GMBT"
 }
 RE.RewardColors = {
 	[1] = "FFFF0000",
